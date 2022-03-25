@@ -1,0 +1,6 @@
+network:
+  outputs: velocity
+loss:
+  smooth field: 10.
+  sparse field: .01
+  regularizer decay: .01

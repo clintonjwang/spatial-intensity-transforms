@@ -1,0 +1,34 @@
+random seed: 0
+AMP: false
+debug: false
+paths:
+  datasets dir: /data/vision/polina/scratch/clintonw/datasets
+  slurm output dir: ~/code/sitgan/results
+  pretrained model name: null
+data loading:
+  batch size: 4
+  upper percentile: 98
+  lower percentile: 1
+  clip: false
+  spread: 1.2
+optimizer:
+  epochs: 100
+  G learning rate: 5e-5
+  weight decay: 1e-5
+augmentations:
+  ordering: affine (.9), flip (.3), intensity (.7), bias (.3), noise (.7)
+  affine:
+    rotation (degrees): 10,10
+    translation (voxels): 10,10
+    shearing: .05,.05
+    scaling: .1,.1
+  intensity scaling: -.2,.25
+  intensity shift: .03
+  noise stdev: .03
+  bias field:
+    coefficients: 0,.5
+    order: 3
+  consistency regularization: null
+network:
+  outputs: null
+loss: {}

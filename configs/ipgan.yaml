@@ -1,0 +1,12 @@
+network:
+  type: IPGAN
+  generator:
+    min channels: 32
+loss:
+  adversarial loss type: WGAN-GP
+  ID loss: 100.
+  reconstruction loss: 10.
+  gradient penalty: 10.
+optimizer:
+  G learning rate: 5e-5
+  D learning rate: 5e-5

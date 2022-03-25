@@ -1,0 +1,42 @@
+optimizer:
+  G learning rate: 5e-5
+  D/R learning rate: 5e-5
+loss:
+  attribute loss: .1
+  attribute loss growth: .1
+  reconstruction loss: .5
+  reconstruction loss growth: .01
+  regressor loss: 10
+  adversarial loss type: WGAN-GP
+  gradient penalty: 1
+  identity-preservation loss: 0.
+network:
+  type: StarGAN
+  discriminator:
+    type: DenseNet
+    pretrained: false
+    # patch-based: true
+    # min channels: 18
+    # C/:
+    #   bias: false
+    #   kernel size: 3
+    # down blocks: 5
+    # downsampling type: strided conv
+    # dropout: 0.0
+  generator:
+    type: My U-Net
+    optimizer step interval: 2
+    res blocks: 2
+    min channels: 32
+    # upsampling type: bilinear
+    # final kernel: 1
+    # initial kernel: 5
+    # conditioning type: concatenate scalars
+    # downsampling type: max blur pool
+    # layer activation: ReLU
+    # layer normalization: batch
+  # image activation: tanh
+  # layer activation: leaky ReLU
+  # layer normalization: batch
+  # number of resolutions: 3
+  # number of skip connections: 0

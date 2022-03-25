@@ -1,0 +1,5 @@
+network:
+  type: CVAE
+  min channels: 32
+optimizer:
+  G learning rate: 1e-5

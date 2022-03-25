@@ -1,0 +1,12 @@
+network:
+  type: CAAE
+  generator:
+    min channels: 32
+loss:
+  adversarial loss type: WGAN
+  reconstruction loss: 1.
+  smooth output: .01
+optimizer:
+  G learning rate: 5e-5
+  Dz learning rate: 5e-5
+  Dimg learning rate: 5e-5

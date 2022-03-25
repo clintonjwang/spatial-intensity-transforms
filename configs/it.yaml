@@ -1,0 +1,5 @@
+network:
+  outputs: diffs
+loss:
+  sparse intensity: 1.
+  regularizer decay: .01

@@ -1,0 +1,18 @@
+dataset: 2D MRI-GENIE FLAIR
+data loading:
+  batch size: 4
+  attributes:
+  - age
+  - NIHSS
+  - mRS
+  image shape:
+  - 224
+  - 192
+paths:
+  data root: /data/vision/polina/scratch/clintonw/datasets/MRI-GENIE
+  GASROS:
+    3D npy subdir: gasros_flair/correct_bias_field
+    2D npy subdir: 2d_gasros/npy
+  MRI-GENIE:
+    3D npy subdir: mrigenie_flair/rescale_and_register
+    2D npy subdir: 2d_mrigenie/npy
