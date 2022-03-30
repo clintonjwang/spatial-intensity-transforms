@@ -36,36 +36,37 @@ def get_job_args(job):
 
 def get_job_model_and_args(job):
     args = get_job_args(job)
+    G_path = osp.expanduser(f"~/code/sitgan/results/{job}/weights/final_G.pth")
+    if osp.exists(G_path):
+        prefix = "final"
+    else:
+        prefix = "best"
+        G_path = osp.expanduser(f"~/code/sitgan/results/{job}/weights/best_G.pth")
+
     if args["network"]["type"] == "StarGAN":
         G,DR = build_starGAN(args)
-        G_path = osp.expanduser(f"~/code/sitgan/results/{job}/weights/best_G.pth")
-        DR_path = osp.expanduser(f"~/code/sitgan/results/{job}/weights/best_DR.pth")
-        G.load_state_dict(torch.load(G_path), strict=False)
+        DR_path = osp.expanduser(f"~/code/sitgan/results/{job}/weights/{prefix}_DR.pth")
         DR.load_state_dict(torch.load(DR_path), strict=False)
         models = {"G":G, "DR":DR}
     elif args["network"]["type"] == "CAAE":
         G,Dz,Dimg = build_CAAE(args)
-        G_path = osp.expanduser(f"~/code/sitgan/results/{job}/weights/best_G.pth")
-        Dz_path = osp.expanduser(f"~/code/sitgan/results/{job}/weights/best_Dz.pth")
-        Dimg_path = osp.expanduser(f"~/code/sitgan/results/{job}/weights/best_Dimg.pth")
-        G.load_state_dict(torch.load(G_path), strict=False)
+        Dz_path = osp.expanduser(f"~/code/sitgan/results/{job}/weights/{prefix}_Dz.pth")
+        Dimg_path = osp.expanduser(f"~/code/sitgan/results/{job}/weights/{prefix}_Dimg.pth")
         Dz.load_state_dict(torch.load(Dz_path), strict=False)
         Dimg.load_state_dict(torch.load(Dimg_path), strict=False)
         models = {"G":G, "Dz":Dz, "Dimg":Dimg}
     elif args["network"]["type"] == "CVAE":
         G = build_CVAE(args)
-        G_path = osp.expanduser(f"~/code/sitgan/results/{job}/weights/best_G.pth")
-        G.load_state_dict(torch.load(G_path), strict=False)
         models = {"G":G}
     elif args["network"]["type"] == "IPGAN":
         G,D = build_IPGAN(args)
-        G_path = osp.expanduser(f"~/code/sitgan/results/{job}/weights/best_G.pth")
-        D_path = osp.expanduser(f"~/code/sitgan/results/{job}/weights/best_D.pth")
-        G.load_state_dict(torch.load(G_path), strict=False)
+        D_path = osp.expanduser(f"~/code/sitgan/results/{job}/weights/{prefix}_D.pth")
         D.load_state_dict(torch.load(D_path), strict=False)
         models = {"G":G, "D":D}
     else:
         raise NotImplementedError
+
+    G.load_state_dict(torch.load(G_path), strict=False)
     for m, model in models.items():
         model.eval()
     return models, args
@@ -101,8 +102,9 @@ def build_synthetic_dataset_for_job(job, slurm=False):
 
     dataset = get_dataset_for_job(job)
     dataloaders = dataloader.get_dataloaders_for_dataset(dataset, batch_size=32, attr_loaders=True)
-    models, _ = get_job_model_and_args(job)
+    models, args = get_job_model_and_args(job)
     G = models["G"]
+    model_type = args["network"]["type"]
 
     fake_imgs, attrs_new = [], []
     with torch.no_grad():
@@ -112,7 +114,13 @@ def build_synthetic_dataset_for_job(job, slurm=False):
             attr_new = next(attr_iter).cuda()
             attr_new = torch.where(torch.isnan(attr_new), torch.randn_like(attr_new), attr_new)
             attr_gt = torch.where(torch.isnan(attr_gt), torch.randn_like(attr_gt), attr_gt)
-            fake_img = G(orig_imgs, attr_new - attr_gt)
+            dY = attr_new - attr_gt
+            if model_type == "CVAE":
+                fake_img = G(orig_imgs, y=attr_gt, dy=dY)
+            elif model_type == "CAAE":
+                fake_img = G(orig_imgs, y=attr_new)
+            else:
+                fake_img = G(orig_imgs, dY)
             fake_imgs.append(fake_img.cpu())
             attrs_new.append(attr_new.cpu())
 

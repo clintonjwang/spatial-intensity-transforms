@@ -7,11 +7,11 @@ paths:
   pretrained model name: null
 data loading:
   batch size: 4
-  upper percentile: 98
+  upper percentile: 96
   lower percentile: 1
   clip: false
-  spread: 1.2
 optimizer:
+  type: Adam
   epochs: 100
   G learning rate: 5e-5
   weight decay: 1e-5

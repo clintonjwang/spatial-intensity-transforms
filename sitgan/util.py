@@ -10,6 +10,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import monai.transforms as mtr
 
+rescale_clip = mtr.ScaleIntensityRangePercentiles(lower=1, upper=99, b_min=0, b_max=255, clip=True, dtype=np.uint8)
+rescale_noclip = mtr.ScaleIntensityRangePercentiles(lower=0, upper=100, b_min=0, b_max=255, clip=False, dtype=np.uint8)
+
 def glob2(*paths):
     pattern = osp.expanduser(osp.join(*paths))
     if "*" not in pattern:
@@ -188,9 +191,6 @@ def save_examples(epoch, root, *imgs, transforms=None):
             imgs[ix] = imgs[ix].detach().cpu().squeeze(1).numpy()
         if transforms is not None:
             transforms = transforms.detach().cpu().numpy()
-
-    rescale_clip = mtr.ScaleIntensityRangePercentiles(lower=1, upper=99, b_min=0, b_max=255, clip=True, dtype=np.uint8)
-    rescale_noclip = mtr.ScaleIntensity(minv=0, maxv=255, dtype=np.uint8)
 
     os.makedirs(root, exist_ok=True)
     for ix in range(imgs[0].shape[0]):

@@ -4,10 +4,6 @@
 *.jpg
 analysis
 results
-LACE
-guided-diffusion
-stylegan2-encoder-pytorch
-stargan
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

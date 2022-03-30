@@ -13,9 +13,17 @@ def total_variation_norm(img):
     return (tv_h+tv_w)/(B*C*H*W)
 
 def L1_norm(img):
-    return img.abs().mean()
+    return img.abs().sum((1,2,3))
 def L2_norm(img):
-    return img.pow(2).mean().sqrt()
+    return img.pow(2).sum((1,2,3)).sqrt()
+def L1_dist(img1, img2):
+    return (img1-img2).abs().sum((1,2,3))
+def L2_dist(img1, img2):
+    return (img1-img2).pow(2).sum((1,2,3)).sqrt()
+
+def ID_loss(x_t, x_s, dy):
+    age_diff = dy[:,0].abs()/2
+    return (x_t - x_s).abs().sum((1,2,3)) * (-age_diff).exp()
 
 def adv_loss_fxns(loss_settings):
     if "WGAN" in loss_settings["adversarial loss type"]:
@@ -23,8 +31,9 @@ def adv_loss_fxns(loss_settings):
         D_fxn = lambda fake_logit, true_logit: (fake_logit - true_logit).squeeze()
         return G_fxn, D_fxn
     elif "standard" in loss_settings["adversarial loss type"]:
-        G_fxn = lambda fake_logit: torch.log(1-fake_logit).squeeze()
-        D_fxn = lambda fake_logit, true_logit: (-torch.log(1-fake_logit) - torch.log(true_logit)).squeeze()
+        G_fxn = lambda fake_logit: -fake_logit - torch.log1p(torch.exp(-fake_logit))#torch.log(1-torch.sigmoid(fake_logit)).squeeze()
+        D_fxn = lambda fake_logit, true_logit: (fake_logit + torch.log1p(torch.exp(-fake_logit)) + torch.log1p(torch.exp(-true_logit))).squeeze()
+        #-torch.log(1-fake_logit) - torch.log(true_logit)
         return G_fxn, D_fxn
     else:
         raise NotImplementedError
@@ -66,10 +75,6 @@ def maskedMSE_mean(attr_pred, attr_gt):
     if torch.numel(diffs) == 0:
         return np.nan
     return diffs.pow(2).mean()
-
-def ID_loss(x_t, x_s, dy):
-    age_diff = dy[:,0].abs()/2
-    return (x_t - x_s).abs().mean(dim=[1,2,3]) * (-age_diff).exp()
 
 def KLD_from_std_normal(mu, logvar):
     return -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())

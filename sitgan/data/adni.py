@@ -16,8 +16,8 @@ def get_test_subjects_for_adni():
     return test_ids
 
 
-def get_image_matching_metrics_for_subject(subject_id, G, transforms, n_attr,
-        age_scale, model_type, max_samples=5):
+def get_image_matching_metrics_for_subject(subject_id, G, transforms,
+        age_scale, model_type, n_attr=4, max_samples=5):
     dps, T = get_all_timepoints_for_subject(subject_id)
     if len(dps) == 1:
         return
@@ -46,14 +46,14 @@ def get_image_matching_metrics_for_subject(subject_id, G, transforms, n_attr,
             X_est = G(X_s, dY)
 
     def rmse_f(x1, x2):
-        return (x1-x2).pow(2).view(x1.size(0), -1).mean(1).sqrt()
+        return (x1-x2).pow(2).flatten(start_dim=1).mean(1).sqrt()
     rmse = rmse_f(X_est, X_t).mean(0)
     dssim = kornia.losses.ssim(X_est, X_t, window_size=11, reduction="mean")
     return rmse.item(), dssim.item()
 
 
-def get_adni_trajectory(subject_id, G, transforms, n_attr, age_scale, model_type, path, overwrite=False):
-    if osp.exists(path) and overwrite is False:
+def get_adni_trajectory(path=None, subject_id=None, G=None, transforms=None, age_scale=None, model_type=None, n_attr=4, overwrite=False):
+    if path is not None and osp.exists(path) and overwrite is False:
         outputs = pickle.load(open(path, "rb"))
     else:
         dps, T = get_all_timepoints_for_subject(subject_id)
@@ -84,8 +84,8 @@ def get_adni_trajectory(subject_id, G, transforms, n_attr, age_scale, model_type
         X_gt = torch.stack(X_gt,0)
         dY = torch.stack(dY,0).cuda()
         if model_type in ("CVAE", "CAAE"):
-            attr_gt = dp["attributes"].cuda()
-            attr_gt = torch.where(torch.isnan(attr_gt), torch.randn_like(attr_gt), attr_gt).unsqueeze(0).tile(4,1)
+            attr_gt = dps[0]["attributes"].cuda()
+            attr_gt = torch.where(torch.isnan(attr_gt), torch.randn_like(attr_gt), attr_gt).unsqueeze(0).tile(dY.size(0),1)
         with torch.no_grad():
             if model_type == "CVAE":
                 X_est = G(X_0, y=attr_gt, dy=dY)
@@ -97,14 +97,22 @@ def get_adni_trajectory(subject_id, G, transforms, n_attr, age_scale, model_type
         outputs = {"subject_id":subject_id, "X_0": dps[0]["image"].squeeze(),
             "X_gt": X_gt.squeeze(1), "X_est": X_est.cpu().squeeze(1),
             "dT": [t for ix,t in enumerate(T) if ix in ixs]}
-
-        pickle.dump(outputs, open(path, "wb"))
+        
+        if path is not None:
+            pickle.dump(outputs, open(path, "wb"))
 
     return outputs
 
 
 def parse_date(date_str):
     return datetime.strptime(date_str, "%m/%d/%Y").date()
+
+def get_midslice_for_series(series_id):
+    path = osp.join(ANALYSIS_DIR, "2d_adni.dat")
+    _, val_datalist = pickle.load(open(path, "rb"))
+    for dp in val_datalist:
+        if dp["ID"].startswith(series_id) and dp["ID"].endswith("_7"):
+            return dp
 
 def get_all_timepoints_for_subject(subject_id):
     path = osp.join(ANALYSIS_DIR, "2d_adni.dat")

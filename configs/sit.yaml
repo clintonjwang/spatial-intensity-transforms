@@ -1,9 +1,9 @@
 network:
   outputs: diffs, displacement
 loss:
-  smooth field: 10.
+  smooth field: 1.
   sparse field: .01
-  sparse intensity: 1.
+  sparse intensity: .1
   regularizer decay: .01
 augmentations:
   consistency regularization: balanced

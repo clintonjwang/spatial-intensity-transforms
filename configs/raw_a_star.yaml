@@ -1,0 +1,4 @@
+parent:
+- raw
+- adni
+- stargan

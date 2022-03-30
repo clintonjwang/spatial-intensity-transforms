@@ -1,4 +1,4 @@
-import argparse, os, shutil, yaml, sys, torch
+import argparse, os, yaml, sys, torch, shutil
 osp = os.path
 
 def parse_args():
@@ -18,8 +18,11 @@ def parse_args():
     main_config_path = osp.join(config_dir, config_name+".yaml")
 
     args = args_from_file(main_config_path, cmd_args)
-
-    yaml.safe_dump(args, open(osp.join(args["paths"]["job output dir"], "config.yaml"), 'w'))
+    paths = args["paths"]
+    if osp.exists(paths["job output dir"]):
+        shutil.rmtree(paths["job output dir"])
+    os.makedirs(paths["weights dir"], exist_ok=True)
+    yaml.safe_dump(args, open(osp.join(paths["job output dir"], "config.yaml"), 'w'))
     return args
 
 def infer_missing_args(args):
@@ -39,7 +42,6 @@ def infer_missing_args(args):
     paths["job output dir"] = osp.join(paths["slurm output dir"], args["job_id"])
     paths["loss history path"] = osp.join(paths["job output dir"], "metrics.csv")
     paths["weights dir"] = osp.join(paths["job output dir"], "weights")
-    os.makedirs(paths["weights dir"], exist_ok=True)
     for k in args["optimizer"]:
         if "learning rate" in k:
             args["optimizer"][k] = float(args["optimizer"][k])
@@ -67,9 +69,9 @@ def args_from_file(path, cmd_args=None):
         parents = []
         names = osp.basename(path[:-5]).split("_")
 
-        if names[0] in ["sit", "it", "st", "dt", "dit"]:
+        if names[0] in ["sit", "it", "st", "dt", "dit", "raw"]:
             parents.append(names[0])
-        elif names[0] != "raw":
+        else:
             raise ValueError(f"bad path {path}")
 
         if names[1] == "m":

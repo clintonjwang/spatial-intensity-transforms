@@ -5,14 +5,17 @@ import numpy as np
 
 ANALYSIS_DIR = osp.expanduser("~/code/sitgan/analysis")
 
-def get_test_subjects_for_mrigenie():
+def get_test_subjects_for_mrigenie(has_nihss=False):
     path = osp.join(ANALYSIS_DIR, "2d_mrigenie.dat")
     _, val_datalist = pickle.load(open(path, "rb"))
     test_ids = []
     for dp in val_datalist:
+        if has_nihss is True and np.isnan(dp["attributes"][1].item()):
+            continue
         dp_id = dp["ID"]
         if dp_id.endswith("_0"):
             test_ids.append(dp_id[:dp_id.rfind("_")])
+
     return test_ids
 
 def get_midslice_for_subject(subject_id):
@@ -23,7 +26,8 @@ def get_midslice_for_subject(subject_id):
         if dp["ID"].startswith(subject_id) and dp["ID"].endswith("_7"):
             return dp
 
-def get_mrigenie_extrapolation_age(subject_id, G, transforms, model_type, path, overwrite=False):
+def get_mrigenie_extrapolation_age(subject_id, G, transforms, model_type, path,
+        num_attrs=3, overwrite=False):
     if osp.exists(path) and overwrite is False:
         outputs = pickle.load(open(path, "rb"))
     else:
@@ -42,7 +46,7 @@ def get_mrigenie_extrapolation_age(subject_id, G, transforms, model_type, path, 
         else:
             gt_ix = 4
         age_diffs = torch.cat((torch.arange(-40,-9,10), torch.arange(10,41,10)))[4-gt_ix:8-gt_ix]
-        dY = age_diffs.cuda().unsqueeze(1).tile(3)
+        dY = age_diffs.cuda().unsqueeze(1).tile(num_attrs)
         dY[:,1:].zero_()
         X_0 = dp["image"].cuda().unsqueeze(0).tile(4,1,1,1)
         attr_gt = dp["attributes"].cuda()
@@ -57,6 +61,47 @@ def get_mrigenie_extrapolation_age(subject_id, G, transforms, model_type, path, 
                 X_est = G(X_0, dY/age_std)
         outputs = {"subject_id":subject_id, "X_0": dp["image"].squeeze(),
             "X_est": X_est.cpu().squeeze(1), "dY": age_diffs, "gt_ix": gt_ix}
+
+        pickle.dump(outputs, open(path, "wb"))
+
+    return outputs
+
+def get_mrigenie_extrapolation_nihss(subject_id, G, transforms, model_type, path,
+        num_attrs=3, overwrite=False):
+    if osp.exists(path) and overwrite is False:
+        outputs = pickle.load(open(path, "rb"))
+    else:
+        dp = get_midslice_for_subject(subject_id)
+        dp = transforms(dp)
+        nihss_mean, nihss_scale = np.load(osp.join(ANALYSIS_DIR, "mrigenie_normalizations.npy"))[1]
+        base_nihss = dp["attributes"][1].item() * nihss_scale + nihss_mean
+        if base_nihss < 5:
+            gt_ix = 0
+        elif base_nihss < 10:
+            gt_ix = 1
+        elif base_nihss < 20:
+            gt_ix = 2
+        elif base_nihss < 25:
+            gt_ix = 3
+        else:
+            gt_ix = 4
+        nihss_diffs = torch.cat((torch.arange(-20,-4,5), torch.arange(5,21,5)))[4-gt_ix:8-gt_ix]
+        dY = nihss_diffs.cuda().unsqueeze(1).tile(num_attrs)
+        dY[:,0].zero_()
+        dY[:,2:].zero_()
+        X_0 = dp["image"].cuda().unsqueeze(0).tile(4,1,1,1)
+        attr_gt = dp["attributes"].cuda()
+        attr_gt = torch.where(torch.isnan(attr_gt), torch.randn_like(attr_gt), attr_gt).unsqueeze(0).tile(4,1)
+        with torch.no_grad():
+            if model_type == "CVAE":
+                X_est = G(X_0, y=attr_gt, dy=dY/nihss_scale)
+            elif model_type == "CAAE":
+                attr_targ = attr_gt + (dY/nihss_scale)
+                X_est = G(X_0, y=attr_targ)
+            else:
+                X_est = G(X_0, dY/nihss_scale)
+        outputs = {"subject_id":subject_id, "X_0": dp["image"].squeeze(),
+            "X_est": X_est.cpu().squeeze(1), "dY": nihss_diffs, "gt_ix": gt_ix}
 
         pickle.dump(outputs, open(path, "wb"))
 

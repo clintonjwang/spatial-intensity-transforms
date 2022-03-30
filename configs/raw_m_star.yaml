@@ -1,0 +1,5 @@
+parent:
+- mrigenie
+- stargan
+loss:
+  reconstruction loss: 10

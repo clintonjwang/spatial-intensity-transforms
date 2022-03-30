@@ -4,7 +4,6 @@ data loading:
   attributes:
   - age
   - NIHSS
-  - mRS
   image shape:
   - 224
   - 192

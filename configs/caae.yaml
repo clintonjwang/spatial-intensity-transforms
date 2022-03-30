@@ -1,12 +1,20 @@
 network:
   type: CAAE
   generator:
-    min channels: 32
+    min channels: 16
+  discriminator:
+    type: DenseNet
+data loading:
+  batch size: 8
 loss:
-  adversarial loss type: WGAN
-  reconstruction loss: 1.
+  adversarial loss type: WGAN-GP
+  reconstruction loss: .1
+  diff loss: 10.
   smooth output: .01
+  gradient penalty: .1
 optimizer:
-  G learning rate: 5e-5
-  Dz learning rate: 5e-5
-  Dimg learning rate: 5e-5
+  type: Adam
+  G learning rate: 1e-4
+  Dz learning rate: 1e-5
+  Dimg learning rate: 1e-5
+  weight decay: 1e-4
