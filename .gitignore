@@ -1,8 +1,6 @@
 *.pt
 *.npy
-*.png
-*.jpg
-analysis
+temp
 results
 
 # Byte-compiled / optimized / DLL files
