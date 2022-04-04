@@ -12,7 +12,7 @@ def get_SIT_weights_and_trackers(loss_args, intervals):
         trackers["F2"] = util.MetricTracker(name="sparse field", function=losses.L2_norm, intervals=intervals)
     if "sparse intensity" in loss_args:
         weights["dx"] = loss_args["sparse intensity"]
-        trackers["dx"] = util.MetricTracker(name="sparse intensity", function=losses.L1_norm, intervals=intervals)
+        trackers["dx"] = util.MetricTracker(name="sparse intensity", function=losses.L1_norm_avg, intervals=intervals)
 
     return weights, trackers
 
@@ -35,8 +35,9 @@ def add_SIT_losses(SIT_w, SIT_trackers, transforms, output_type, G_loss, phase="
     return G_loss
 
 def update_SIT_weights(SIT_w, loss_args):
-    for k in SIT_w:
-        SIT_w[k] *= 1-loss_args["regularizer decay"]
+    if "regularizer decay" in loss_args:
+        for k in SIT_w:
+            SIT_w[k] *= 1-loss_args["regularizer decay"]
 
 def get_kwargs(optimizer_settings):
     kwargs = {"weight_decay":optimizer_settings["weight decay"]}

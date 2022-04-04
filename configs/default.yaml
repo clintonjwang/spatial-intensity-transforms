@@ -7,16 +7,16 @@ paths:
   pretrained model name: null
 data loading:
   batch size: 4
-  upper percentile: 96
+  upper percentile: 97
   lower percentile: 1
   clip: false
 optimizer:
   type: Adam
-  epochs: 100
-  G learning rate: 5e-5
-  weight decay: 1e-5
+  epochs: 40
+  G learning rate: 1e-3
+  weight decay: 1e-4
 augmentations:
-  ordering: affine (.9), flip (.3), intensity (.7), bias (.3), noise (.7)
+  ordering: affine (.9), flip (.3), intensity (.7), bias (.3), noise (.7), gamma (.4)
   affine:
     rotation (degrees): 10,10
     translation (voxels): 10,10
@@ -31,4 +31,10 @@ augmentations:
   consistency regularization: null
 network:
   outputs: null
+  modifications:
+    blurpool: false
+    squeeze-excite: false
+    channels last: false
+    factorize layers: false
+    freeze layers: false
 loss: {}

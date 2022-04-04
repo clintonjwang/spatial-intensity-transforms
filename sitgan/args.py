@@ -66,33 +66,47 @@ def args_from_file(path, cmd_args=None):
     if osp.exists(path):
         args = yaml.safe_load(open(path, 'r'))
     else:
-        parents = []
-        names = osp.basename(path[:-5]).split("_")
-
-        if names[0] in ["sit", "it", "st", "dt", "dit", "raw"]:
-            parents.append(names[0])
+        jobname = osp.basename(path[:-5])
+        if jobname.startswith("dms_"):
+            c = jobname[jobname.find("_")+1:]
+            args = {
+                "parent": ["dit", "mrigenie", "stargan"],
+                "sparse intensity": 10**float(c),
+            }
+        elif jobname.startswith("das_"):
+            c = jobname[jobname.find("_")+1:]
+            args = {
+                "parent": ["dit", "adni", "stargan"],
+                "sparse intensity": 10**float(c),
+            }
         else:
-            raise ValueError(f"bad path {path}")
+            parents = []
+            names = jobname.split("_")
 
-        if names[1] == "m":
-            parents.append("mrigenie")
-        elif names[1] == "a":
-            parents.append("adni")
-        else:
-            raise ValueError(f"bad path {path}")
+            if names[0] in ["sit", "it", "st", "dt", "dit", "raw"]:
+                parents.append(names[0])
+            else:
+                raise ValueError(f"bad path {path}")
 
-        if names[2] == "star":
-            parents.append("stargan")
-        elif names[2] == "ipg":
-            parents.append("ipgan")
-        elif names[2] == "cvae":
-            parents.append("cvae")
-        elif names[2] == "caae":
-            parents.append("caae")
-        else:
-            raise ValueError(f"bad path {path}")
+            if names[1] == "m":
+                parents.append("mrigenie")
+            elif names[1] == "a":
+                parents.append("adni")
+            else:
+                raise ValueError(f"bad path {path}")
 
-        args = {"parent":parents}
+            if names[2] == "star":
+                parents.append("stargan")
+            elif names[2] == "ipg":
+                parents.append("ipgan")
+            elif names[2] == "cvae":
+                parents.append("cvae")
+            elif names[2] == "caae":
+                parents.append("caae")
+            else:
+                raise ValueError(f"bad path {path}")
+
+            args = {"parent":parents}
 
     if cmd_args is not None:
         for param in ["job_id", "config_name", "reps"]:#, "partition"]:

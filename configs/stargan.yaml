@@ -1,31 +1,20 @@
-optimizer:
-  G learning rate: 1e-4
-  D/R learning rate: 2e-5
-data loading:
-  spread: 1.5
-loss:
-  attribute loss: 100.
-  reconstruction loss: .1
-  regressor loss: 10
-  adversarial loss type: WGAN-GP
-  gradient penalty: .1
 network:
   type: StarGAN
   discriminator:
-    type: DenseNet
-    pretrained: True
-    # patch-based: true
-    # min channels: 18
-    # C/:
-    #   bias: false
-    #   kernel size: 3
-    # down blocks: 5
-    # downsampling type: strided conv
-    # dropout: 0.0
+    type: simple
+    pretrained: False
   generator:
+    type: AE
     optimizer step interval: 1
-    res blocks: 4
-    min channels: 24
-    # initial kernel: 5
-  # image activation: tanh
-  # layer activation: leaky ReLU
+    res blocks: 1
+    min channels: 16
+data loading:
+  batch size: 8
+loss:
+  adversarial loss type: WGAN-GP
+  attribute loss: 100
+  reconstruction loss: .01
+  regressor loss: 10
+  gradient penalty: 1
+optimizer:
+  D/R learning rate: 1e-3

@@ -27,10 +27,11 @@ def get_midslice_for_subject(subject_id):
             return dp
 
 def get_mrigenie_extrapolation_age(subject_id, G, transforms, model_type, path,
-        num_attrs=3, overwrite=False):
+        num_attrs=2, overwrite=False):
     if osp.exists(path) and overwrite is False:
         outputs = pickle.load(open(path, "rb"))
     else:
+        border = 4
         dp = get_midslice_for_subject(subject_id)
         dp = transforms(dp)
         age_mean, age_std = np.load(osp.join(ANALYSIS_DIR, "mrigenie_normalizations.npy"))[0]
@@ -45,21 +46,21 @@ def get_mrigenie_extrapolation_age(subject_id, G, transforms, model_type, path,
             gt_ix = 3
         else:
             gt_ix = 4
+        gt_ix = 2
         age_diffs = torch.cat((torch.arange(-40,-9,10), torch.arange(10,41,10)))[4-gt_ix:8-gt_ix]
-        dY = age_diffs.cuda().unsqueeze(1).tile(num_attrs)
+        dY = age_diffs.cuda().unsqueeze(1).tile(num_attrs) / age_std
         dY[:,1:].zero_()
         X_0 = dp["image"].cuda().unsqueeze(0).tile(4,1,1,1)
-        attr_gt = dp["attributes"].cuda()
-        attr_gt = torch.where(torch.isnan(attr_gt), torch.randn_like(attr_gt), attr_gt).unsqueeze(0).tile(4,1)
         with torch.no_grad():
             if model_type == "CVAE":
-                X_est = G(X_0, y=attr_gt, dy=dY/age_std)
-            elif model_type == "CAAE":
-                attr_targ = attr_gt + (dY/age_std)
-                X_est = G(X_0, y=attr_targ)
+                attr_gt = dp["attributes"].cuda()
+                attr_gt = torch.where(torch.isnan(attr_gt), torch.randn_like(attr_gt), attr_gt).unsqueeze(0).tile(4,1)
+                X_est = G(X_0, y=attr_gt, dy=dY)
             else:
                 X_est = G(X_0, dY/age_std)
-        outputs = {"subject_id":subject_id, "X_0": dp["image"].squeeze(),
+        X_0 = dp["image"].squeeze()
+        X_0[:border] = X_0[-border:] = X_0[:,:border] = X_0[:,-border:] = 1
+        outputs = {"subject_id":subject_id, "X_0": X_0,
             "X_est": X_est.cpu().squeeze(1), "dY": age_diffs, "gt_ix": gt_ix}
 
         pickle.dump(outputs, open(path, "wb"))
@@ -86,20 +87,17 @@ def get_mrigenie_extrapolation_nihss(subject_id, G, transforms, model_type, path
         else:
             gt_ix = 4
         nihss_diffs = torch.cat((torch.arange(-20,-4,5), torch.arange(5,21,5)))[4-gt_ix:8-gt_ix]
-        dY = nihss_diffs.cuda().unsqueeze(1).tile(num_attrs)
+        dY = nihss_diffs.cuda().unsqueeze(1).tile(num_attrs) / nihss_scale
         dY[:,0].zero_()
         dY[:,2:].zero_()
         X_0 = dp["image"].cuda().unsqueeze(0).tile(4,1,1,1)
-        attr_gt = dp["attributes"].cuda()
-        attr_gt = torch.where(torch.isnan(attr_gt), torch.randn_like(attr_gt), attr_gt).unsqueeze(0).tile(4,1)
         with torch.no_grad():
             if model_type == "CVAE":
-                X_est = G(X_0, y=attr_gt, dy=dY/nihss_scale)
-            elif model_type == "CAAE":
-                attr_targ = attr_gt + (dY/nihss_scale)
-                X_est = G(X_0, y=attr_targ)
+                attr_gt = dp["attributes"].cuda()
+                attr_gt = torch.where(torch.isnan(attr_gt), torch.randn_like(attr_gt), attr_gt).unsqueeze(0).tile(4,1)
+                X_est = G(X_0, y=attr_gt, dy=dY)
             else:
-                X_est = G(X_0, dY/nihss_scale)
+                X_est = G(X_0, dY)
         outputs = {"subject_id":subject_id, "X_0": dp["image"].squeeze(),
             "X_est": X_est.cpu().squeeze(1), "dY": nihss_diffs, "gt_ix": gt_ix}
 

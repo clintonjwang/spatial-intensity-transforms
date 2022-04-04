@@ -7,11 +7,10 @@ nn = torch.nn
 F = nn.functional
 
 from tqdm import tqdm
-from monai.metrics import MSEMetric
 
 import args as args_module
 import util, losses, optim
-from models.common import FC_BN_ReLU
+from models.common import FC_BN_ReLU, modify_model
 from models.ipgan import Generator, Discriminator as img_Discrim
 
 
@@ -40,7 +39,7 @@ def train_model(args, dataloaders):
     Dz_adv_tracker = util.MetricTracker(name="Dz adversarial loss", function=D_fxn, intervals=intervals)
     Dimg_adv_tracker = util.MetricTracker(name="Dimg adversarial loss", function=D_fxn, intervals=intervals)
     D_diff_tracker = util.MetricTracker(name="D diff loss", function=lambda x: x.squeeze(), intervals=intervals)
-    recon_tracker = util.MetricTracker(name="reconstruction", function=losses.L2_dist, intervals=intervals)
+    recon_tracker = util.MetricTracker(name="reconstruction", function=losses.L1_dist_mean, intervals=intervals)
     TV_tracker = util.MetricTracker(name="smooth output", function=losses.total_variation_norm, intervals=intervals)
     SIT_w, SIT_trackers = optim.get_SIT_weights_and_trackers(args["loss"], intervals)
     gp_tracker = util.MetricTracker(name="gradient penalty", function=losses.gradient_penalty_y, intervals={"train":1})
@@ -48,7 +47,7 @@ def train_model(args, dataloaders):
     metric_trackers = [E_adv_tracker, G_adv_tracker, Dz_adv_tracker, Dimg_adv_tracker,
         recon_tracker, TV_tracker, gp_tracker, total_G_tracker, *list(SIT_trackers.values())]
 
-    def process_minibatch(batch, phase):
+    def process_minibatch(batch, attr_targ, phase):
         orig_imgs, attr_gt = batch["image"].cuda(), batch["attributes"].cuda()
         attr_gt = torch.where(torch.isnan(attr_gt), torch.randn_like(attr_gt), attr_gt)
         x1,x2,x3,fake_z = G.enc_forward(orig_imgs)
@@ -56,58 +55,48 @@ def train_model(args, dataloaders):
         E_adv = E_adv_tracker(fake_dz, phase=phase)
 
         if np.random.rand() < .2:
-            fake_imgs, transforms = G.dec_forward((x1,x2,x3,fake_z), attr_gt, x=orig_imgs, return_transforms=True)
+            dy = torch.zeros_like(attr_gt)
+            fake_imgs, transforms = G.dec_forward((x1,x2,x3,fake_z), dy, x=orig_imgs, return_transforms=True)
             recon = recon_tracker(fake_imgs, orig_imgs, phase=phase)
             fake_dimg = Dimg(fake_imgs, attr_gt)
             G_loss = E_adv + recon * recon_w
         else:
-            attr_targ = torch.randn_like(attr_gt)
-            fake_imgs, transforms = G.dec_forward((x1,x2,x3,fake_z), attr_targ, x=orig_imgs, return_transforms=True)
-            fake_dimg = Dimg(fake_imgs, attr_gt)
-            G_loss = E_adv
+            attr_targ = torch.where(torch.isnan(attr_targ), attr_gt, attr_targ)
+            dy = attr_targ - attr_gt
+            fake_imgs, transforms = G.dec_forward((x1,x2,x3,fake_z), dy, x=orig_imgs, return_transforms=True)
+            fake_dimg = Dimg(fake_imgs, attr_targ) * (1+diff_w) - Dimg(fake_imgs, attr_gt) * diff_w
+            G_adv = G_adv_tracker(fake_dimg, phase=phase)
+            TV = TV_tracker(fake_imgs, phase=phase)
+            G_loss = E_adv + G_adv + TV * TV_w
+            G_loss = optim.add_SIT_losses(SIT_w, SIT_trackers, transforms=transforms,
+                    output_type=args["network"]["outputs"], G_loss=G_loss)
             recon = None
 
-        G_adv = G_adv_tracker(fake_dimg, phase=phase)
-        G_loss = G_loss + G_adv
-        if TV_w > 0:
-            TV = TV_tracker(fake_imgs, phase=phase)
-            G_loss = G_loss + TV * TV_w
-
-        uniform_z = torch.rand_like(fake_z)*4-2
-        G_loss = optim.add_SIT_losses(SIT_w, SIT_trackers, transforms=transforms,
-                output_type=args["network"]["outputs"], G_loss=G_loss)
-            
         if np.isnan(G_loss.item()):
             raise ValueError("NaN loss")
-        backward(G_loss, optims["G"])
         total_G_tracker.update_with_minibatch(G_loss.item(), phase=phase)
+        backward(G_loss, optims["G"])
 
+        uniform_z = torch.rand_like(fake_z)
         true_dz = Dz(uniform_z)
         fake_dz = Dz(fake_z.detach())
         Dz_adv = Dz_adv_tracker(fake_dz, true_dz, phase=phase)
         backward(Dz_adv, optims["Dz"])
 
-        true_dimg = Dimg(orig_imgs, attr_gt)
-        Dimg_adv = Dimg_adv_tracker(fake_dimg.detach(), true_dimg, phase=phase)
         if recon is not None:
-            dy = torch.zeros_like(attr_gt)
-            Dimg_loss = Dimg_adv
-        else:
-            dy = attr_targ - attr_gt
-            diff = Dimg(orig_imgs, attr_targ) - Dimg(orig_imgs, attr_gt)
-            D_diff = D_diff_tracker(diff)
-            Dimg_loss = Dimg_adv + D_diff * diff_w
+            return {"orig_imgs": orig_imgs, "fake_imgs": fake_imgs, "transforms": transforms}
+
+        true_dimg = Dimg(orig_imgs, attr_gt)
+        fake_dimg = Dimg(fake_imgs.detach(), attr_targ)
+        Dimg_adv = Dimg_adv_tracker(fake_dimg, true_dimg, phase=phase)
+        diff = Dimg(orig_imgs, attr_targ) - Dimg(orig_imgs, attr_gt)
+        D_diff = D_diff_tracker(diff)
+        Dimg_loss = Dimg_adv + D_diff * diff_w
         gp = gp_tracker(orig_imgs, fake_imgs, D=Dimg, y=attr_gt, dy=dy, phase=phase)
         Dimg_loss = Dimg_loss + gp * gp_w
         backward(Dimg_loss, optims["Dimg"])
 
-        L = {"G":G_loss, "Dz":Dz_adv, "Dimg":Dimg_loss}
-        total_G_tracker.update_with_minibatch(G_loss.item(), phase=phase)
-        example_outputs = {"orig_imgs": orig_imgs, "fake_imgs": fake_imgs, "transforms": transforms}
-        #gp_tracker?
-        # backward(L["G"], optims["G"], retain_graph=True)
-
-        return L, example_outputs
+        return {"orig_imgs": orig_imgs, "fake_imgs": fake_imgs, "transforms": transforms}
 
     def backward(loss, optim, retain_graph=False):
         optim.zero_grad()
@@ -121,8 +110,10 @@ def train_model(args, dataloaders):
     for epoch in range(1,max_epochs+1):
         for m in models.values():
             m.train()
+        # attr_iter = dataloaders["train_attr"].__iter__()
         for batch in dataloaders["train"]:
-            L, example_outputs = process_minibatch(batch, phase="train")
+            attr_targ = next(dataloaders["train_attr"].__iter__()).cuda()
+            example_outputs = process_minibatch(batch, attr_targ, phase="train")
             global_step += 1
             if global_step % 200 == 0:
                 break
@@ -130,9 +121,9 @@ def train_model(args, dataloaders):
         if example_outputs["transforms"] is None:
             transforms = None
         else:
-            transforms = example_outputs["transforms"][:1]
+            transforms = example_outputs["transforms"][:2]
         util.save_examples(epoch, paths["job output dir"]+"/imgs/train",
-            example_outputs["orig_imgs"][:1], example_outputs["fake_imgs"][:1], transforms=transforms)
+            example_outputs["orig_imgs"][:2], example_outputs["fake_imgs"][:2], transforms=transforms)
 
         if total_G_tracker.is_at_min("train"):
             for m,model in models.items():
@@ -154,10 +145,13 @@ def build_CAAE(args):
     G = Generator(num_attributes=num_attributes, img_shape=args["data loading"]["image shape"],
         outputs=network_settings["outputs"], C_enc=network_settings["generator"]["min channels"],
         C_dec=network_settings["generator"]["min channels"])
-    D_z = z_Discrim()
-    D_img = img_Discrim(num_attributes=num_attributes, type=network_settings["discriminator"]["type"])
+    Dz = z_Discrim()
+    Dimg = img_Discrim(num_attributes=num_attributes,
+        type=network_settings["discriminator"]["type"],
+        pretrained=network_settings["discriminator"]["pretrained"])
 
-    return G.cuda(), D_z.cuda(), D_img.cuda()
+    modify_model(network_settings["modifications"], (G, Dz, Dimg))
+    return G.cuda(), Dz.cuda(), Dimg.cuda()
 
 
 class z_Discrim(nn.Module):

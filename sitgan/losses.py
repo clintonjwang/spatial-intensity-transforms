@@ -14,16 +14,22 @@ def total_variation_norm(img):
 
 def L1_norm(img):
     return img.abs().sum((1,2,3))
+def L1_norm_avg(img):
+    return img.abs().mean((1,2,3))
 def L2_norm(img):
     return img.pow(2).sum((1,2,3)).sqrt()
 def L1_dist(img1, img2):
     return (img1-img2).abs().sum((1,2,3))
+def L1_dist_mean(img1, img2):
+    return (img1-img2).abs().mean((1,2,3))
 def L2_dist(img1, img2):
     return (img1-img2).pow(2).sum((1,2,3)).sqrt()
+def L2_square_dist(img1, img2):
+    return (img1-img2).pow(2).sum((1,2,3))
 
 def ID_loss(x_t, x_s, dy):
-    age_diff = dy[:,0].abs()/2
-    return (x_t - x_s).abs().sum((1,2,3)) * (-age_diff).exp()
+    age_diff = dy[:,0].abs()
+    return (x_t - x_s).abs().mean((1,2,3)) * (-age_diff).exp()
 
 def adv_loss_fxns(loss_settings):
     if "WGAN" in loss_settings["adversarial loss type"]:
@@ -68,6 +74,12 @@ def gradient_penalty_y(real_img, generated_img, D, y, dy):
 def maskedMSE_sum(attr_pred, attr_gt):
     diffs = attr_pred - attr_gt
     return torch.where(torch.isnan(diffs), torch.zeros_like(diffs), diffs).pow(2).sum() / attr_pred.shape[0]
+
+def maskedMAE_sum(attr_pred, attr_gt):#, slope=.5):
+    diffs = attr_pred - attr_gt
+    diffs = torch.where(torch.isnan(diffs), torch.zeros_like(diffs), diffs)
+    #diffs = F.leaky_relu(diffs, slope=slope)
+    return diffs.abs().sum() / attr_pred.shape[0]
 
 def maskedMSE_mean(attr_pred, attr_gt):
     diffs = attr_pred - attr_gt

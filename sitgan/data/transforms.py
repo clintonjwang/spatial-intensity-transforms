@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 nn = torch.nn
+F = nn.functional
 import monai.transforms as mtr
 
 import util
@@ -80,6 +81,12 @@ def get_transforms(args):
                 transform_sequence.append(mtr.RandScaleIntensityd(keys=["image"],
                     factors=aug_settings["intensity scaling"],
                     prob=p))
+            elif s == "histogram shift":
+                transform_sequence.append(mtr.RandHistogramShiftd(keys=["image"],
+                    num_control_points=(5,15), prob=p))
+            elif s == "gamma":
+                transform_sequence.append(mtr.RandAdjustContrastd(keys=["image"],
+                    gamma=(.7,1.5), prob=p))
             elif s == 'affine':
                 R = aug_settings["affine"]["rotation (degrees)"]
                 if hasattr(R, "__iter__"):
@@ -156,3 +163,4 @@ def get_attr_transforms():
         mtr.CastToType(dtype=torch.float32),
         mtr.SqueezeDim(0),
     ])
+

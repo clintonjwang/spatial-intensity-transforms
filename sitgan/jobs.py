@@ -85,13 +85,10 @@ def get_repeated_jobs_from_base_job(base_job):
         print("no repetitions/x-validation performed yet")
     return job_names
 
-def get_synthetic_ds_for_job(job, behavior_if_missing="build"):
+def get_synthetic_ds_for_job(job, overwrite=False):
     path = osp.join(ANALYSIS_DIR, "synth_ds", job+"_imgs.pt")
-    if not osp.exists(path):
-        if behavior_if_missing == "build":
-            build_synthetic_dataset_for_job(job)
-        else:
-            raise NotImplementedError
+    if overwrite or not osp.exists(path):
+        build_synthetic_dataset_for_job(job)
     imgs = torch.load(path)
     attrs = torch.load(path.replace("imgs", "attr"))
     return imgs, attrs
@@ -113,12 +110,10 @@ def build_synthetic_dataset_for_job(job, slurm=False):
             orig_imgs, attr_gt = batch["image"].cuda(), batch["attributes"].cuda()
             attr_new = next(attr_iter).cuda()
             attr_new = torch.where(torch.isnan(attr_new), torch.randn_like(attr_new), attr_new)
-            attr_gt = torch.where(torch.isnan(attr_gt), torch.randn_like(attr_gt), attr_gt)
+            attr_gt = torch.where(torch.isnan(attr_gt), torch.zeros_like(attr_gt), attr_gt)
             dY = attr_new - attr_gt
             if model_type == "CVAE":
                 fake_img = G(orig_imgs, y=attr_gt, dy=dY)
-            elif model_type == "CAAE":
-                fake_img = G(orig_imgs, y=attr_new)
             else:
                 fake_img = G(orig_imgs, dY)
             fake_imgs.append(fake_img.cpu())

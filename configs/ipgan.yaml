@@ -3,17 +3,16 @@ network:
   generator:
     min channels: 16
   discriminator:
-    type: DenseNet
+    type: simple
+    pretrained: False
 data loading:
-  batch size: 8
+  batch size: 6
   spread: 1.2
 loss:
   adversarial loss type: WGAN-GP
   ID loss: .1
-  reconstruction loss: .01
-  diff loss: 10.
-  gradient penalty: .1
+  reconstruction loss: .1
+  diff loss: 1.
+  gradient penalty: 1
 optimizer:
-  G learning rate: 5e-5
-  D learning rate: 1e-5
-  weight decay: 1e-4
+  D learning rate: 1e-4

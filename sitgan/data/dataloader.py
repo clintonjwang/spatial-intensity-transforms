@@ -31,7 +31,7 @@ def get_dataloaders_for_dataset(dataset, batch_size, augment=True, attr_loaders=
 
     return get_dataloaders(args, attr_loaders=attr_loaders)
 
-def get_dataloaders(args, attr_loaders=False, overwrite=False):
+def get_dataloaders(args, attr_loaders=True, overwrite=False):
     paths = args["paths"]
     data_settings = args["data loading"]
     attrs = data_settings["attributes"]
