@@ -3,7 +3,7 @@ import os, torch
 osp = os.path
 import numpy as np
 
-ANALYSIS_DIR = osp.expanduser("~/code/sitgan/analysis")
+ANALYSIS_DIR = osp.expanduser("~/code/sitgan/temp")
 
 def get_test_subjects_for_mrigenie(has_nihss=False):
     path = osp.join(ANALYSIS_DIR, "2d_mrigenie.dat")

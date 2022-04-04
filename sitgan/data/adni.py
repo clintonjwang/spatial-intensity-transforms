@@ -7,7 +7,7 @@ import dill as pickle
 from kornia.losses.ssim import ssim_loss
 from datetime import datetime
 
-ANALYSIS_DIR = osp.expanduser("~/code/sitgan/analysis")
+ANALYSIS_DIR = osp.expanduser("~/code/sitgan/temp")
 
 def get_test_subjects_for_adni():
     path = osp.join(ANALYSIS_DIR, "2d_adni.dat")

@@ -18,7 +18,7 @@ from monai.data import (
 
 import args as args_module
 from data.transforms import get_transforms, get_attr_transforms
-ANALYSIS_DIR = osp.expanduser("~/code/sitgan/analysis")
+ANALYSIS_DIR = osp.expanduser("~/code/sitgan/temp")
 
 def get_dataloaders_for_dataset(dataset, batch_size, augment=True, attr_loaders=False):
     if dataset == "2D MRI-GENIE FLAIR":
