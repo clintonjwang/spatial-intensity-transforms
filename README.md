@@ -1,71 +1,109 @@
-# sitgan
-Spatial-intensity transform GAN
+# High Fidelity Medical Image-to-Image Translation with Spatial-Intensity Transforms
 
 ![alt text](https://github.com/clintonjwang/sitgan/blob/main/teaser.png?raw=true)
-<p align="center">
-  <img src="https://raw.githubusercontent.com/Project-MONAI/MONAI/dev/docs/images/MONAI-logo-color.png" width="50%" alt='project-monai'>
-</p>
 
-**M**edical **O**pen **N**etwork for **AI**
+The Spatial-Intensity Transform (SIT) is a simple network layer that can be appended to an image decoder or generator in order to make it more robust in many medical image-to-image translation tasks, such as image harmonization, counterfactual visualization, simulating disease progression, visualizing neurodegeneration, and analyzing imaging biomarkers. While most generators output a new image directly after the final convolution, SIT instead adds a residual to the original image (the intensity transform) and then applies a smooth deformation to warp the image (the spatial transform).
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
-[![CI Build](https://github.com/Project-MONAI/MONAI/workflows/build/badge.svg?branch=dev)](https://github.com/Project-MONAI/MONAI/commits/dev)
-[![Documentation Status](https://readthedocs.org/projects/monai/badge/?version=latest)](https://docs.monai.io/en/latest/?badge=latest)
-[![codecov](https://codecov.io/gh/Project-MONAI/MONAI/branch/dev/graph/badge.svg)](https://codecov.io/gh/Project-MONAI/MONAI)
-[![PyPI version](https://badge.fury.io/py/monai.svg)](https://badge.fury.io/py/monai)
+This repository includes four different models loosely based on the following works:
+* [Conditional variational autoencoder](https://proceedings.neurips.cc/paper/2015/hash/8d55a249e6baa5c06772297520da2051-Abstract.html)
+* [Conditional adversarial autoencoder](https://arxiv.org/abs/1702.08423)
+* [Identity-preserving GAN](https://arxiv.org/abs/1912.02620)
+* [StarGAN](https://arxiv.org/abs/1711.09020)
 
-MONAI is a [PyTorch](https://pytorch.org/)-based, [open-source](https://github.com/Project-MONAI/MONAI/blob/dev/LICENSE) framework for deep learning in healthcare imaging, part of [PyTorch Ecosystem](https://pytorch.org/ecosystem/).
-Its ambitions are:
-- developing a community of academic, industrial and clinical researchers collaborating on a common foundation;
-- creating state-of-the-art, end-to-end training workflows for healthcare imaging;
-- providing researchers with the optimized and standardized way to create and evaluate deep learning models.
+Our implementations of these models do not follow the original architectures or hyperparameters, but are inspired by their loss functions and training schemes. For each of these models, SIT introduces only one new hyperparameter (how sparse the intensity transform should be) and no learned parameters!
 
 
-## Features
-> _The codebase is currently under active development._
-> _Please see [the technical highlights](https://docs.monai.io/en/latest/highlights.html) and [What's New](https://docs.monai.io/en/latest/whatsnew.html) of the current milestone release._
+## Code Usage
 
-- flexible pre-processing for multi-dimensional medical imaging data;
-- compositional & portable APIs for ease of integration in existing workflows;
-- domain-specific implementations for networks, losses, evaluation metrics and more;
-- customizable design for varying user expertise;
-- multi-GPU data parallelism support.
-
-
-## Installation
-
-To install [the current release](https://pypi.org/project/monai/), you can simply run:
-
-```bash
-pip install monai
+To run our SIT version of StarGAN on your own data (only 2D slices currently supported), create `configs/myconfig.yaml` as follows:
+```yaml
+parent:
+- dit
+- stargan
+dataset: MyDataset
+data loading:
+  attributes:
+  - conditional_attribute_1
+  - conditional_attribute_2
+  #- ...
+  #- ...
+  image shape:
+  - 224
+  - 160
+# overwrite additional settings here as desired
 ```
 
-For other installation methods (using the default GitHub branch, using Docker, etc.), please refer to [the installation guide](https://docs.monai.io/en/latest/installation.html).
+Edit `sitgan/data/dataloader.get_dataloaders()` to return a PyTorch dataloader for your dataset.
+(Optional) edit `configs/default.yaml` with your own paths and/or hyperparameter choices.
 
-## Getting Started
+Run `python train.py -c=myconfig`.
 
-[MedNIST demo](https://colab.research.google.com/drive/1wy8XUSnNWlhDNazFdvGBHLfdkGvOHBKe) and [MONAI for PyTorch Users](https://colab.research.google.com/drive/1boqy7ENpKrqaJoxFlbHIBnIODAs1Ih1T) are available on Colab.
 
-Examples and notebook tutorials are located at [Project-MONAI/tutorials](https://github.com/Project-MONAI/tutorials).
+## SIT Usage
 
-Technical documentation is available at [docs.monai.io](https://docs.monai.io).
+To add SIT to your own generator, simply modify your network from this:
 
-## Contributing
-For guidance on making a contribution to MONAI, see the [contributing guidelines](https://github.com/Project-MONAI/MONAI/blob/dev/CONTRIBUTING.md).
+```python
+class MyConditionalGenerator(nn.Module):
+    def __init__(self, **kwargs):
+        super().__init__()
+        #...
+        self.output_layer = MyModule(out_channels=1)
 
-## Community
-Join the conversation on Twitter [@ProjectMONAI](https://twitter.com/ProjectMONAI) or join our [Slack channel](https://forms.gle/QTxJq3hFictp31UM9).
+    def forward(self, input_image):
+        #...
+        output_image = self.output_layer(intermediates)
+        return output_image
+```
 
-Ask and answer questions over on [MONAI's GitHub Discussions tab](https://github.com/Project-MONAI/MONAI/discussions).
+to this:
 
-## Links
-- Website: https://monai.io/
-- API documentation: https://docs.monai.io
-- Code: https://github.com/Project-MONAI/MONAI
-- Project tracker: https://github.com/Project-MONAI/MONAI/projects
-- Issue tracker: https://github.com/Project-MONAI/MONAI/issues
-- Wiki: https://github.com/Project-MONAI/MONAI/wiki
-- Test status: https://github.com/Project-MONAI/MONAI/actions
-- PyPI package: https://pypi.org/project/monai/
-- Weekly previews: https://pypi.org/project/monai-weekly/
-- Docker Hub: https://hub.docker.com/r/projectmonai/monai
+```python
+import util
+from models.common import OutputTransform
+
+class MySITGenerator(nn.Module):
+    def __init__(self, outputs="diffs, velocity", **kwargs):
+        super().__init__()
+        out_channels = util.get_num_channels_for_outputs(outputs)
+        #...
+        self.output_layer = MyModule(out_channels=out_channels)
+        self.final_transforms = OutputTransform(outputs)
+
+    def forward(self, input_image, return_transforms=False):
+        #...
+        transforms = self.output_layer(intermediates)
+        return self.final_transforms(input_image, transforms, return_transforms=return_transforms)
+```
+
+The `outputs` argument can also be set to any of the following:
+* `None` to restore the original network behavior
+* `"diffs"` to apply a sparse intensity transform to `input_image`
+* `"displacement"` to apply a non-diffeomorphic deformation to `input_image`
+* `"velocity"` to apply a diffeomorphic deformation to `input_image`
+* `"diffs, displacement"` to apply a sparse intensity transform followed by a non-diffeomorphic deformation
+* `"diffs, velocity"` to apply a sparse intensity transform followed by a diffeomorphic deformation (SIT)
+
+Note that our implementation of SIT currently only handles single channel images, although it can be easily extended to multiple channels.
+
+## Requirements
+
+* Pytorch
+* One or more high-end NVIDIA GPUs, NVIDIA drivers, CUDA 10.0 toolkit and cuDNN 7.5
+
+## Citation
+
+```
+@inproceedings{wang2020spatial,
+  title={Spatial-intensity transform GANs for high fidelity medical image-to-image translation},
+  author={Wang, Clinton J and Rost, Natalia S and Golland, Polina},
+  booktitle={International Conference on Medical Image Computing and Computer-Assisted Intervention},
+  pages={749--759},
+  year={2020},
+  organization={Springer}
+}
+```
+
+## Acknowledgements
+
+We thank [Daniel Moyer](https://dcmoyer.github.io/) for his help with making figures.

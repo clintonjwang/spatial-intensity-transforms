@@ -3,5 +3,5 @@ network:
 loss:
   smooth field: 1.
   # sparse field: .01
-  sparse intensity: 1
+  sparse intensity: 10
   # regularizer decay: .01

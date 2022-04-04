@@ -13,6 +13,16 @@ import monai.transforms as mtr
 rescale_clip = mtr.ScaleIntensityRangePercentiles(lower=1, upper=99, b_min=0, b_max=255, clip=True, dtype=np.uint8)
 rescale_noclip = mtr.ScaleIntensityRangePercentiles(lower=0, upper=100, b_min=0, b_max=255, clip=False, dtype=np.uint8)
 
+def get_num_channels_for_outputs(outputs):
+    if "displacement" in outputs or "velocity" in outputs:
+        if "," in outputs:
+            out_channels = 3
+        else:
+            out_channels = 2
+    else:
+        out_channels = 1
+    return out_channels
+
 def glob2(*paths):
     pattern = osp.expanduser(osp.join(*paths))
     if "*" not in pattern:

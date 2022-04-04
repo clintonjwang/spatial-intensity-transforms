@@ -46,7 +46,7 @@ if __name__ == "__main__":
             tasks_per_node=1,
             gpus_per_node=1,
             cpus_per_task=16,
-            slurm_exclude="bergamot,perilla,caraway,cassia,anise,marjoram,clove,zaatar", #clove
+            slurm_exclude="bergamot,perilla,caraway,cassia,anise,marjoram,clove,zaatar,mint", #clove
             slurm_exclusive=True if args["partition"]=="gpu" else False,
             timeout_min=90000,
         )

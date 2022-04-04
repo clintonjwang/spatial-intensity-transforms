@@ -29,14 +29,10 @@ class OutputTransform(nn.Module):
             self.warp = Warp()
         elif "displacement" in outputs:
             self.warp = Warp()
-        self.sigmoid = sigmoid
 
     def forward(self, x, transforms, return_transforms=False):
         if len(self.outputs) == 0:
-            if self.sigmoid:
-                out = torch.sigmoid(transforms) * 1.5 - .25
-            else:
-                out = transforms
+            out = transforms
             if not self.training:
                 out = torch.clamp(out, min=0, max=1)
             transforms = None
@@ -54,7 +50,6 @@ class OutputTransform(nn.Module):
             else:
                 raise NotImplementedError
         elif len(self.outputs) == 2:
-            # transforms = torch.cat((torch.tanh(transforms[:,:1]*.1), transforms[:,1:]*10), dim=1)
             transforms = torch.cat((torch.tanh(transforms[:,:1]), transforms[:,1:]), dim=1)
             dx, field = transforms[:,:1], transforms[:,1:]
             if self.outputs[0] == "diffs":

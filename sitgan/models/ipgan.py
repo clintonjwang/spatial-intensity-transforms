@@ -137,19 +137,13 @@ class Generator(nn.Module):
     def __init__(self, num_attributes, img_shape, outputs=None,
             C_enc=32, C_dec=32, z_dim=50):
         super().__init__()
-        if "displacement" in outputs or "velocity" in outputs:
-            if "," in outputs:
-                out_channels = 3
-            else:
-                out_channels = 2
-        else:
-            out_channels = 1
+        out_channels = util.get_num_channels_for_outputs(outputs)
+        self.final_transforms = OutputTransform(outputs)
         assert img_shape[0] % 8 == 0 and img_shape[1] % 8 == 0
         self.img_shape = img_shape
         self.encoder = SkipEncoder(out_dim=z_dim, C=C_enc)
         self.decoder = CondSkipDecoder(in_dim=z_dim, num_attributes=num_attributes,
             out_shape=img_shape, out_channels=out_channels, C=C_dec)
-        self.final_transforms = OutputTransform(outputs)
 
     def forward(self, x, y, return_transforms=False):
         z = self.enc_forward(x)
