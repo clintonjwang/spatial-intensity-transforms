@@ -48,7 +48,7 @@ def train_model(args, dataloaders):
     def process_minibatch(batch, attr_targ, phase):
         orig_imgs, attr_gt = batch["image"].cuda(), batch["attributes"].cuda()
         attr_gt = torch.where(torch.isnan(attr_gt), torch.randn_like(attr_gt), attr_gt)
-        if np.random.rand() < .1:
+        if np.random.rand() < .4:
             dy = torch.zeros_like(attr_gt)
             trans_img, transforms = G(orig_imgs, dy, return_transforms=True)
             recon = recon_tracker(trans_img, orig_imgs, phase=phase)

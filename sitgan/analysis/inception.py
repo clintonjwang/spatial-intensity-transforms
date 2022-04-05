@@ -48,7 +48,7 @@ def fine_tune_regressor_on_dataset(dataset, slurm=False, save_path=None, bsz=32,
         if save_path is None:
             save_path = "incv3/adni"
     elif dataset == "2D MRI-GENIE FLAIR":
-        outputs = ("age", "NIHSS", "mRS")
+        outputs = ("age", "NIHSS",)
         if save_path is None:
             save_path = "incv3/mrigenie"
     save_path = osp.join(ANALYSIS_DIR, save_path)
@@ -59,7 +59,7 @@ def fine_tune_regressor_on_dataset(dataset, slurm=False, save_path=None, bsz=32,
     dataloaders = dataloader.get_dataloaders_for_dataset(dataset, batch_size=bsz, augment=False)
     loss_tracker = util.MetricTracker("loss")
     trackers = [util.MetricTracker(var) for var in outputs]
-    optimizer = torch.optim.Adam(incv3.parameters(), lr=lr, betas=(.5,.999))
+    optimizer = torch.optim.Adam(incv3.parameters(), lr=lr, betas=(.5,.999), weight_decay=1e-5)
     iter_num = 0
     while iter_num < n_iters:
         for batch in dataloaders["train"]:
@@ -79,11 +79,12 @@ def fine_tune_regressor_on_dataset(dataset, slurm=False, save_path=None, bsz=32,
                         Y_gt = batch["attributes"].cuda()
                         loss = masked_mse(Y_gt,Y_est)
                         for ix in range(len(outputs)):
-                            trackers[ix].update_with_minibatch(
-                                masked_mse(Y_gt[...,ix], Y_est[...,ix]))
+                            diffs = Y_gt[:,ix] - Y_est[:,ix]
+                            trackers[ix].update_with_minibatch(diffs[~torch.isnan(diffs)])
                         loss_tracker.update_with_minibatch(loss, phase="val")
                         incv3.train()
-                    if loss_tracker.is_at_min("val"):
+                        
+                    if trackers[0].is_at_min("val"):
                         torch.save(incv3, save_path+".pt")
                         for ix,var in enumerate(outputs):
                             np.save(save_path+f"_{var}.npy", trackers[ix].minibatch_values["val"])
@@ -131,8 +132,8 @@ def get_inception_v3_residuals(job, bsz=32, slurm=False, overwrite=False, tuned=
         path = osp.join(ANALYSIS_DIR, "residuals", f"{job}.dat")
     if osp.exists(path) and overwrite is False:
         return pickle.load(open(path, "rb"))
-        
-    gen_imgs, Y_gt = job_mgmt.get_synthetic_ds_for_job(job, overwrite=overwrite)
+    
+    gen_imgs, Y_gt = job_mgmt.get_synthetic_ds_for_job(job, overwrite=(overwrite == "all"))
     dataset = job_mgmt.get_dataset_for_job(job)
     incv3 = load_inception_regressor(dataset=dataset, tuned=tuned)
     outputs = job_mgmt.get_attributes_for_job(job)
@@ -229,12 +230,12 @@ def calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
 
     return diff.dot(diff) + np.trace(sigma1) + np.trace(sigma2) - 2*np.trace(covmean)
 
-def get_fid(job, tuned=True):
+def get_fid(job, tuned=True, overwrite=False):
     dataset = job_mgmt.get_dataset_for_job(job)
     activations = get_incv3_activations_of_ds(dataset, tuned=tuned)
     m1 = activations.mean(0).numpy()
     s1 = np.cov(activations.numpy(), rowvar=False)
-    activations = get_incv3_activations_of_G(job, tuned=tuned)
+    activations = get_incv3_activations_of_G(job, tuned=tuned, overwrite=overwrite)
     m2 = activations.mean(0).numpy()
     s2 = np.cov(activations.numpy(), rowvar=False)
     fid = calculate_frechet_distance(m1,s1, m2,s2)

@@ -9,7 +9,7 @@ data loading:
   batch size: 8
 loss:
   adversarial loss type: WGAN-GP
-  reconstruction loss: .01
+  reconstruction loss: .1
   diff loss: 1.
   smooth output: .01
   gradient penalty: 10

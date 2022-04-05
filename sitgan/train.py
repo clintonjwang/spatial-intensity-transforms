@@ -8,6 +8,7 @@ from data.dataloader import get_dataloaders
 from models.stargan import train_model as train_starGAN
 from models.caae import train_model as train_CAAE
 from models.cvae import train_model as train_CVAE
+from models.rgae import train_model as train_RGAE
 from models.ipgan import train_model as train_IPGAN
 
 
@@ -25,6 +26,8 @@ def main(seed, args):
     dataloaders = get_dataloaders(args)
     if args["network"]["type"] == "StarGAN":
         train_starGAN(args, dataloaders=dataloaders)
+    elif args["network"]["type"] == "RGAE":
+        train_RGAE(args, dataloaders=dataloaders)
     elif args["network"]["type"] == "CAAE":
         train_CAAE(args, dataloaders=dataloaders)
     elif args["network"]["type"] == "CVAE":

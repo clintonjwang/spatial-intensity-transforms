@@ -2,15 +2,16 @@
 
 ![alt text](https://github.com/clintonjwang/sitgan/blob/main/teaser.png?raw=true)
 
-The Spatial-Intensity Transform (SIT) is a simple network layer that can be appended to an image decoder or generator in order to make it more robust in many medical image-to-image translation tasks, such as image harmonization, counterfactual visualization, simulating disease progression, visualizing neurodegeneration, and analyzing imaging biomarkers. While most generators output a new image directly after the final convolution, SIT instead adds a residual to the original image (the intensity transform) and then applies a smooth deformation to warp the image (the spatial transform).
+The **Spatial-Intensity Transform (SIT)** is a **simple** network layer that can be appended to an image decoder or generator to make it **robust** in medical image-to-image translation tasks, such as image harmonization, counterfactual visualization, simulating disease progression, visualizing neurodegeneration, and analyzing imaging biomarkers. While most generators output a new image directly after the final convolution, SIT instead adds a residual to the original image (the intensity transform) and then applies a smooth deformation to warp the image (the spatial transform).
 
-This repository includes four different models loosely based on the following works:
-* [Conditional variational autoencoder](https://proceedings.neurips.cc/paper/2015/hash/8d55a249e6baa5c06772297520da2051-Abstract.html)
+This repository includes four different models:
+* Regressor-guided autoencoder
 * [Conditional adversarial autoencoder](https://arxiv.org/abs/1702.08423)
 * [Identity-preserving GAN](https://arxiv.org/abs/1912.02620)
 * [StarGAN](https://arxiv.org/abs/1711.09020)
+The last three models are only loosely based on the original works. Our implementations do not follow the original architectures or hyperparameters, but are inspired by their loss functions and training schemes.
 
-Our implementations of these models do not follow the original architectures or hyperparameters, but are inspired by their loss functions and training schemes. For each of these models, SIT introduces only one new hyperparameter (how sparse the intensity transform should be) and no learned parameters!
+For each of these models, SIT introduces only one new hyperparameter (how sparse the intensity transform should be) and no learned parameters!
 
 
 ## Code Usage
@@ -29,14 +30,14 @@ data loading:
   #- ...
   image shape:
   - 224
-  - 160
+  - 192
 # overwrite additional settings here as desired
 ```
 
 Edit `sitgan/data/dataloader.get_dataloaders()` to return a PyTorch dataloader for your dataset.
 (Optional) edit `configs/default.yaml` with your own paths and/or hyperparameter choices.
 
-Run `python train.py -c=myconfig`.
+From within the `sitgan` folder, run `python train.py -c=myconfig`.
 
 
 ## SIT Usage
@@ -93,6 +94,7 @@ Note that our implementation of SIT currently only handles single channel images
 
 ## Citation
 
+If you find this work useful please use the following citation:
 ```
 @inproceedings{wang2020spatial,
   title={Spatial-intensity transform GANs for high fidelity medical image-to-image translation},
@@ -106,4 +108,4 @@ Note that our implementation of SIT currently only handles single channel images
 
 ## Acknowledgements
 
-We thank [Daniel Moyer](https://dcmoyer.github.io/) for his help with making figures.
+Thanks to [Daniel Moyer](https://dcmoyer.github.io/) for his help with making figures.

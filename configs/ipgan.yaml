@@ -11,7 +11,7 @@ data loading:
 loss:
   adversarial loss type: WGAN-GP
   ID loss: .1
-  reconstruction loss: .1
+  reconstruction loss: 1
   diff loss: 1.
   gradient penalty: 1
 optimizer:

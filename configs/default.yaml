@@ -12,7 +12,7 @@ data loading:
   clip: false
 optimizer:
   type: Adam
-  epochs: 40
+  epochs: 30
   G learning rate: 1e-3
   weight decay: 1e-4
 augmentations:

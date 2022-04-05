@@ -58,6 +58,12 @@ def get_CAAE_optims(models, optimizer_settings):
     Dimg_optim = optim_class(models["Dimg"].parameters(), lr=optimizer_settings["Dimg learning rate"], **kwargs)
     return {'G':G_optim, 'Dz':Dz_optim, 'Dimg':Dimg_optim}
 
+def get_RGAE_optims(models, optimizer_settings):
+    optim_class, kwargs = get_kwargs(optimizer_settings)
+    G_optim = optim_class(models["G"].parameters(), lr=optimizer_settings["G learning rate"], **kwargs)
+    DR_optim = optim_class(models["R"].parameters(), lr=optimizer_settings["R learning rate"], **kwargs)
+    return {'G':G_optim, 'R':DR_optim}
+
 def get_starGAN_optims(models, optimizer_settings):
     optim_class, kwargs = get_kwargs(optimizer_settings)
     G_optim = optim_class(models["G"].parameters(), lr=optimizer_settings["G learning rate"], **kwargs)

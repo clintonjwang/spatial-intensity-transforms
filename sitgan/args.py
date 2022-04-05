@@ -71,14 +71,27 @@ def args_from_file(path, cmd_args=None):
             c = jobname[jobname.find("_")+1:]
             args = {
                 "parent": ["dit", "mrigenie", "stargan"],
-                "sparse intensity": 10**float(c),
+                "loss": {
+                    "sparse intensity": 10**float(c),
+                }
             }
         elif jobname.startswith("das_"):
             c = jobname[jobname.find("_")+1:]
             args = {
                 "parent": ["dit", "adni", "stargan"],
-                "sparse intensity": 10**float(c),
+                "loss": {
+                    "sparse intensity": 10**float(c),
+                }
             }
+        # elif jobname.endswith("_a_star"):
+        #     c = jobname[:jobname.find("_")]
+        #     args = {
+        #         "parent": [c, "adni", "stargan"],
+        #         "loss": {
+        #             "attribute loss": 100,
+        #             "reconstruction loss": .01,
+        #         }
+        #     }
         else:
             parents = []
             names = jobname.split("_")
@@ -103,6 +116,8 @@ def args_from_file(path, cmd_args=None):
                 parents.append("cvae")
             elif names[2] == "caae":
                 parents.append("caae")
+            elif names[2] == "rgae":
+                parents.append("rgae")
             else:
                 raise ValueError(f"bad path {path}")
 

@@ -10,13 +10,14 @@ import numpy as np
 import util, losses
 from data.dataloader import get_dataloaders
 from models.stargan import build_starGAN
+from models.rgae import build_RGAE
 from models.caae import build_CAAE
 from models.cvae import build_CVAE
 from models.ipgan import build_IPGAN
 from analysis import analyze
 from data import dataloader
 
-ANALYSIS_DIR = osp.expanduser("~/code/sitgan/analysis")
+ANALYSIS_DIR = osp.expanduser("~/code/sitgan/temp")
 RESULTS_DIR = osp.expanduser("~/code/sitgan/results")
 
 def rename_job(job, new_name):
@@ -55,6 +56,11 @@ def get_job_model_and_args(job):
         Dz.load_state_dict(torch.load(Dz_path), strict=False)
         Dimg.load_state_dict(torch.load(Dimg_path), strict=False)
         models = {"G":G, "Dz":Dz, "Dimg":Dimg}
+    elif args["network"]["type"] == "RGAE":
+        G,R = build_RGAE(args)
+        R_path = osp.expanduser(f"~/code/sitgan/results/{job}/weights/{prefix}_R.pth")
+        R.load_state_dict(torch.load(R_path), strict=False)
+        models = {"G":G, "R":R}
     elif args["network"]["type"] == "CVAE":
         G = build_CVAE(args)
         models = {"G":G}

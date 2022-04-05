@@ -193,8 +193,8 @@ class ConditionalUNet(nn.Module):
         self.up1 = UpCat(self.C[3]+N, self.C[2], cat_size=self.C[3], upsampling_type=upsampling_type)
         self.up2 = UpCat(self.C[2], self.C[1], cat_size=self.C[2], upsampling_type=upsampling_type)
         self.up3 = UpCat(self.C[1]+N, self.C[0], cat_size=self.C[1], upsampling_type=upsampling_type)
-        self.up4 = Up(self.C[0]+N, C[0], upsampling_type=upsampling_type)
-        self.to_tx = nn.Conv2d(C[0], out_channels, kernel_size=1)
+        self.up4 = Up(self.C[0]+N, self.C[0], upsampling_type=upsampling_type)
+        self.to_tx = nn.Conv2d(self.C[0], out_channels, kernel_size=1)
         # self.to_tx4 = ConvConv(self.C[2], out_channels)
         # self.to_tx3 = ConvConv(self.C[1], out_channels)
         # self.to_tx2 = ConvConv(self.C[0], out_channels)
@@ -222,7 +222,7 @@ def merge_pyramid(*inputs):
     return ret
 
 class DiscrimRegressor(nn.Module):
-    def __init__(self, num_attributes, type, outputs=None, pretrained=False):
+    def __init__(self, num_attributes, type, pretrained=False):
         super().__init__()
         if type == "DenseNet":
             self.net = DenseNet121(spatial_dims=2, in_channels=1, out_channels=num_attributes+1, pretrained=pretrained)

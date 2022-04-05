@@ -139,15 +139,16 @@ def get_image_fidelity_metrics_for_jobs(jobs, slurm=False, exact=True, epoch=Non
             if osp.exists(path) and overwrite is False:
                 metrics = pickle.load(open(path, "rb"))
             else:
-                p_ut,r_ut = distributions.get_precision_and_recall(job, tuned=False)
-                p,r = distributions.get_precision_and_recall(job, tuned=True)
-                metrics = {"FID":inception.get_fid(job, tuned=False),
-                    "FID_tuned":inception.get_fid(job, tuned=True),
-                    "F_{1/8}":p, "F_8":r, "P_ut":p_ut, "R_ut":r_ut}
+                # p_ut,r_ut = distributions.get_precision_and_recall(job, tuned=False, overwrite=overwrite)
+                p,r = distributions.get_precision_and_recall(job, tuned=True, overwrite=overwrite)
+                fid = inception.get_fid(job, tuned=True)
+                #"FID":inception.get_fid(job, tuned=False),
+                #"P_ut":p_ut, "R_ut":r_ut
+                metrics = {"FID_tuned": fid, "F_{1/8}":p, "F_8":r,}
                 pickle.dump(metrics, open(path, "wb"))
 
             df = tables.get_results_table()
-            for metric in ("FID", "FID_tuned", "F_{1/8}", "F_8"):
+            for metric in ("FID_tuned", "F_{1/8}", "F_8"):
                 df.loc[job, metric] = metrics[metric]
             tables.save_results_table(df)
 get_image_matching_metrics_for_jobs = get_image_fidelity_metrics_for_jobs

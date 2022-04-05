@@ -54,7 +54,7 @@ def train_model(args, dataloaders):
         fake_dz = Dz(fake_z)
         E_adv = E_adv_tracker(fake_dz, phase=phase)
 
-        if np.random.rand() < .2:
+        if np.random.rand() < .5:
             dy = torch.zeros_like(attr_gt)
             fake_imgs, transforms = G.dec_forward((x1,x2,x3,fake_z), dy, x=orig_imgs, return_transforms=True)
             recon = recon_tracker(fake_imgs, orig_imgs, phase=phase)

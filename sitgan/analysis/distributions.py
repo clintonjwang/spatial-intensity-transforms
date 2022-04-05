@@ -10,8 +10,8 @@ from analysis import inception
 def get_precision_and_recall(job, overwrite=False, tuned=True):
     G_embeddings = inception.get_incv3_activations_of_G(job, overwrite=overwrite, tuned=tuned)
     dataset = job_mgmt.get_dataset_for_job(job)
-    ds_embeddings = inception.get_incv3_activations_of_ds(dataset, overwrite=overwrite, tuned=tuned)
-    P,R = compute_prd_from_embedding(G_embeddings, ds_embeddings, num_clusters=40)
+    ds_embeddings = inception.get_incv3_activations_of_ds(dataset, tuned=tuned)
+    P,R = compute_prd_from_embedding(G_embeddings, ds_embeddings)
     return prd_to_max_f_beta_pair(P,R)
 
 # def compute_inception_statistics(job):
@@ -27,7 +27,7 @@ def get_precision_and_recall(job, overwrite=False, tuned=True):
 #     return torch.cat(activations, 0)
 
 def compute_prd_from_embedding(eval_data, ref_data, num_clusters=20,
-                                 num_angles=1001, num_runs=10,
+                                 num_angles=500, num_runs=10,
                                  enforce_balance=True):
     """Computes PRD data from sample embeddings.
     The points from both distributions are mixed and then clustered. This leads
