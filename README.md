@@ -36,6 +36,7 @@ data loading:
 ```
 
 Edit `sitgan/data/dataloader.get_dataloaders()` to return a PyTorch dataloader for your dataset.
+
 (Optional) edit `configs/default.yaml` with your own paths and/or hyperparameter choices.
 
 From within the `sitgan` folder, run `python train.py -c=path/to/myconfig.yaml -o=path/to/results`.
