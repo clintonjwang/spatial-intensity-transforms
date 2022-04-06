@@ -8,7 +8,7 @@ This repository includes four different models:
 * Regressor-guided autoencoder
 * [Conditional adversarial autoencoder](https://arxiv.org/abs/1702.08423)
 * [Identity-preserving GAN](https://arxiv.org/abs/1912.02620)
-* [StarGAN](https://arxiv.org/abs/1711.09020)
+* [StarGAN](https://arxiv.org/abs/1711.09020)<br>
 The last three models are only loosely based on the original works. Our implementations do not follow the original architectures or hyperparameters, but are inspired by their loss functions and training schemes.
 
 For each of these models, SIT introduces only one new hyperparameter (how sparse the intensity transform should be) and no learned parameters!
