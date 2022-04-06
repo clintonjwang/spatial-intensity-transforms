@@ -1,0 +1,13 @@
+network:
+  type: RGAE
+  generator:
+    type: UNet
+    res blocks: 1
+    min channels: 16
+  regressor:
+    type: simple
+    pretrained: False
+loss:
+  reconstruction loss: .1
+optimizer:
+  R learning rate: 1e-3

@@ -1,0 +1,5 @@
+network:
+  outputs: diffs, displacement
+loss:
+  smooth field: 1
+  sparse intensity: 10

@@ -1,0 +1,8 @@
+dataset: 2D MRI-GENIE FLAIR
+data loading:
+  attributes:
+  - age
+  - NIHSS
+  image shape:
+  - 224
+  - 192

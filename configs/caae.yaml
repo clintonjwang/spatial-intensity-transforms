@@ -1,0 +1,16 @@
+network:
+  type: CAAE
+  generator:
+    min channels: 16
+  discriminator:
+    type: simple
+    pretrained: False
+loss:
+  adversarial loss type: WGAN-GP
+  reconstruction loss: .1
+  diff loss: 1.
+  smooth output: .01
+  gradient penalty: 10
+optimizer:
+  Dz learning rate: 1e-4
+  Dimg learning rate: 1e-4

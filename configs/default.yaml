@@ -1,0 +1,28 @@
+random seed: 0
+paths: {}
+data loading:
+  batch size: 8
+  upper percentile: 97
+  lower percentile: 1
+  clip: false
+optimizer:
+  type: Adam
+  epochs: 50
+  G learning rate: 1e-3
+  weight decay: 1e-4
+augmentations:
+  ordering: affine (.9), flip (.3), intensity (.7), bias (.3), noise (.7), gamma (.4)
+  affine:
+    rotation (degrees): 10,10
+    translation (voxels): 10,10
+    shearing: .05,.05
+    scaling: .1,.1
+  intensity scaling: -.2,.25
+  intensity shift: .03
+  noise stdev: .03
+  bias field:
+    coefficients: 0,.5
+    order: 3
+network:
+  outputs: null
+loss: {}

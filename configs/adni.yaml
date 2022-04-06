@@ -1,0 +1,10 @@
+dataset: 2D ADNI T1
+data loading:
+  attributes:
+  - age
+  - baseline diagnosis
+  - MMSE
+  - CDR
+  image shape:
+  - 224
+  - 160

@@ -1,0 +1,4 @@
+network:
+  outputs: diffs, velocity
+loss:
+  sparse intensity: 10.

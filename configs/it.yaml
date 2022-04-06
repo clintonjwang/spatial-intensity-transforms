@@ -1,0 +1,4 @@
+network:
+  outputs: diffs
+loss:
+  sparse intensity: 10
