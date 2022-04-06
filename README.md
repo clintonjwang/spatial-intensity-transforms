@@ -93,11 +93,9 @@ CUDA is required. The code is not written to run on CPUs.
 
 ## Citation
 
-**Conference paper**<br>
-Spatial-Intensity Transform GANs for High Fidelity Medical Image-to-Image Translation<br>
+[Spatial-Intensity Transform GANs for High Fidelity Medical Image-to-Image Translation](https://link.springer.com/chapter/10.1007/978-3-030-59713-9_72)<br>
 [Clinton J. Wang](https://clintonjwang.github.io/), [Natalia S. Rost](https://www.massgeneral.org/doctors/17477/natalia-rost), and [Polina Golland](https://people.csail.mit.edu/polina/)<br>
 MICCAI 2020
-
 
 If you find this work useful please use the following citation:
 ```
