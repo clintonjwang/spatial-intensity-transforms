@@ -1,6 +1,5 @@
 dataset: 2D MRI-GENIE FLAIR
 data loading:
-  batch size: 4
   attributes:
   - age
   - NIHSS

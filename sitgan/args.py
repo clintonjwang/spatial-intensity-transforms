@@ -1,4 +1,4 @@
-import argparse, os, yaml, sys, torch, shutil
+import argparse, os, yaml, sys, shutil
 osp = os.path
 
 def parse_args():
@@ -141,6 +141,5 @@ def args_from_file(path, cmd_args=None):
 
     config_path = osp.join(config_dir, "default.yaml")
     args = merge_args(yaml.safe_load(open(config_path, 'r')), args)
-    #args["ngpus"] = torch.cuda.device_count()
     infer_missing_args(args)
     return args

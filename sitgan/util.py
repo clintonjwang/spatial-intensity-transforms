@@ -95,8 +95,6 @@ class MetricTracker:
     def __call__(self, *args, phase="val", **kwargs):
         loss = self.function(*args, **kwargs)
         self.update_with_minibatch(loss, phase=phase)
-        # if np.isnan(loss.mean().item()):
-        #     raise ValueError(f"{self.name} became NaN")
         return loss.mean() * self.weight
 
     def update_at_epoch_end(self, phase="val"):

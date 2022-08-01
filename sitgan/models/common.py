@@ -18,7 +18,7 @@ def modify_model(modifications, models):
 
 
 class OutputTransform(nn.Module):
-    def __init__(self, outputs, sigmoid=False):
+    def __init__(self, outputs):
         super().__init__()
         if outputs is None or outputs=="":
             self.outputs = []

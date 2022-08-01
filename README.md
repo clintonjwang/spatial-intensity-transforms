@@ -94,6 +94,11 @@ Note that our implementation of SIT currently only handles single channel images
 
 ## Citation
 
+**Conference paper**
+Spatial-Intensity Transform GANs for High Fidelity Medical Image-to-Image Translation
+[Clinton J. Wang](https://clintonjwang.github.io/), [Natalia S. Rost](https://www.massgeneral.org/doctors/17477/natalia-rost), and [Polina Golland](https://people.csail.mit.edu/polina/)
+MICCAI 2020
+
 If you find this work useful please use the following citation:
 ```
 @inproceedings{wang2020spatial,
