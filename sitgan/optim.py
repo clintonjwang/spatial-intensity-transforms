@@ -75,11 +75,3 @@ def get_IPGAN_optims(models, optimizer_settings):
     G_optim = optim_class(models["G"].parameters(), lr=optimizer_settings["G learning rate"], **kwargs)
     D_optim = optim_class(models["D"].parameters(), lr=optimizer_settings["D learning rate"], **kwargs)
     return {'G':G_optim, 'D':D_optim}
-<<<<<<< HEAD
-
-def get_CVAE_optimizer(G, optimizer_settings):
-    optim_class, kwargs = get_kwargs(optimizer_settings)
-    G_optim = optim_class(G.parameters(), lr=optimizer_settings["G learning rate"], **kwargs)
-    return G_optim
-=======
->>>>>>> 05210ec13073bcca9b4dbff798fb626d963082dc
