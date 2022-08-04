@@ -1,19 +1,13 @@
-import os, pdb, gc
+import os
 osp = os.path
-
 import numpy as np
 import torch
 nn = torch.nn
 F = nn.functional
 
-from tqdm import tqdm
-import kornia.losses
-
-import args as args_module
 import util, losses, optim
-from data.dataloader import get_dataloaders
 from models.common import (Conv_BN_ReLU, Down, SkipEncoder,
-    CondSkipDecoder, OutputTransform, modify_model, Encoder)
+    CondSkipDecoder, OutputTransform, Encoder)
 
 def train_model(args, dataloaders):
     paths=args["paths"]
@@ -48,7 +42,7 @@ def train_model(args, dataloaders):
     def process_minibatch(batch, attr_targ, phase):
         orig_imgs, attr_gt = batch["image"].cuda(), batch["attributes"].cuda()
         attr_gt = torch.where(torch.isnan(attr_gt), torch.randn_like(attr_gt), attr_gt)
-        if np.random.rand() < .4:
+        if np.random.rand() < .5:
             dy = torch.zeros_like(attr_gt)
             trans_img, transforms = G(orig_imgs, dy, return_transforms=True)
             recon = recon_tracker(trans_img, orig_imgs, phase=phase)
@@ -91,7 +85,6 @@ def train_model(args, dataloaders):
     for epoch in range(1,max_epochs+1):
         for m in models.values():
             m.train()
-        # attr_iter = dataloaders["train_attr"].__iter__()
         for batch in dataloaders["train"]:
             attr_targ = next(dataloaders["train_attr"].__iter__()).cuda()
             example_outputs = process_minibatch(batch, attr_targ, phase="train")
@@ -109,8 +102,6 @@ def train_model(args, dataloaders):
         if total_G_tracker.is_at_min("train"):
             for m,model in models.items():
                 torch.save(model.state_dict(), osp.join(paths["weights dir"], f"best_{m}.pth"))
-            # util.save_metric_histograms(metric_trackers, epoch=epoch, root=paths["job output dir"]+"/plots")
-        # if epoch % long_interval == 0:
         util.save_plots(metric_trackers, root=paths["job output dir"]+"/plots")
 
         for tracker in metric_trackers:
@@ -130,7 +121,6 @@ def build_IPGAN(args):
         C_dec=network_settings["generator"]["min channels"])
     D = Discriminator(num_attributes=num_attributes, type=network_settings["discriminator"]["type"])
 
-    modify_model(network_settings["modifications"], (G, D))
     return G.cuda(), D.cuda()
 
 class Generator(nn.Module):

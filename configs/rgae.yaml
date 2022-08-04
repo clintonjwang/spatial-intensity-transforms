@@ -7,10 +7,7 @@ network:
   regressor:
     type: simple
     pretrained: False
-data loading:
-  batch size: 8
 loss:
   reconstruction loss: .1
 optimizer:
-  epochs: 30
   R learning rate: 1e-3

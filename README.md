@@ -9,6 +9,10 @@ This repository includes four different models:
 * [Conditional adversarial autoencoder](https://arxiv.org/abs/1702.08423)
 * [Identity-preserving GAN](https://arxiv.org/abs/1912.02620)
 * [StarGAN](https://arxiv.org/abs/1711.09020)
+<<<<<<< HEAD
+=======
+
+>>>>>>> 05210ec13073bcca9b4dbff798fb626d963082dc
 The last three models are only loosely based on the original works. Our implementations do not follow the original architectures or hyperparameters, but are inspired by their loss functions and training schemes.
 
 For each of these models, SIT introduces only one new hyperparameter (how sparse the intensity transform should be) and no learned parameters!
@@ -35,9 +39,16 @@ data loading:
 ```
 
 Edit `sitgan/data/dataloader.get_dataloaders()` to return a PyTorch dataloader for your dataset.
+<<<<<<< HEAD
 (Optional) edit `configs/default.yaml` with your own paths and/or hyperparameter choices.
 
 From within the `sitgan` folder, run `python train.py -c=myconfig`.
+=======
+
+(Optional) edit `configs/default.yaml` with your own paths and/or hyperparameter choices.
+
+From within the `sitgan` folder, run `python train.py -c=path/to/myconfig.yaml -o=path/to/results`.
+>>>>>>> 05210ec13073bcca9b4dbff798fb626d963082dc
 
 
 ## SIT Usage
@@ -89,6 +100,7 @@ Note that our implementation of SIT currently only handles single channel images
 
 ## Requirements
 
+<<<<<<< HEAD
 * Pytorch
 * One or more high-end NVIDIA GPUs, NVIDIA drivers, CUDA 10.0 toolkit and cuDNN 7.5
 
@@ -97,6 +109,14 @@ Note that our implementation of SIT currently only handles single channel images
 **Conference paper**
 Spatial-Intensity Transform GANs for High Fidelity Medical Image-to-Image Translation
 [Clinton J. Wang](https://clintonjwang.github.io/), [Natalia S. Rost](https://www.massgeneral.org/doctors/17477/natalia-rost), and [Polina Golland](https://people.csail.mit.edu/polina/)
+=======
+CUDA is required. The code is not written to run on CPUs.
+
+## Citation
+
+**[Spatial-Intensity Transform GANs for High Fidelity Medical Image-to-Image Translation](https://link.springer.com/chapter/10.1007/978-3-030-59713-9_72)**<br>
+[Clinton J. Wang](https://clintonjwang.github.io/), [Natalia S. Rost](https://www.massgeneral.org/doctors/17477/natalia-rost), and [Polina Golland](https://people.csail.mit.edu/polina/)<br>
+>>>>>>> 05210ec13073bcca9b4dbff798fb626d963082dc
 MICCAI 2020
 
 If you find this work useful please use the following citation:
@@ -113,4 +133,8 @@ If you find this work useful please use the following citation:
 
 ## Acknowledgements
 
+<<<<<<< HEAD
 Thanks to [Daniel Moyer](https://dcmoyer.github.io/) for his help with making figures.
+=======
+Thanks to [Daniel Moyer](https://dcmoyer.github.io/) for his help with making figures.
+>>>>>>> 05210ec13073bcca9b4dbff798fb626d963082dc

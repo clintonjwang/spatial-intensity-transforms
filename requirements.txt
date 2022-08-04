@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 am==0.0.1
 composer==0.1
 dill==0.3.3
@@ -18,3 +19,11 @@ submitit==1.2.1
 torch==1.11.0
 torchvision==0.12.0
 tqdm==4.63.0
+=======
+matplotlib==3.5.1
+monai==0.8.1
+numpy==1.21.5
+PyYAML==6.0
+seaborn==0.11.1
+torch==1.11.0
+>>>>>>> 05210ec13073bcca9b4dbff798fb626d963082dc

@@ -1,6 +1,5 @@
-import os, pdb, gc
+import os
 osp = os.path
-
 import numpy as np
 import torch
 nn=torch.nn
@@ -8,7 +7,7 @@ F=nn.functional
 
 import util, losses, optim
 from monai.networks.nets import SEResNet50, DenseNet121
-from models.common import OutputTransform, modify_model, Encoder
+from models.common import OutputTransform, Encoder
 from models.ipgan import Generator
 from models.stargan import ConditionalUNet
 
@@ -25,7 +24,7 @@ def train_model(args, dataloaders):
 
     cc_w = loss_args["reconstruction loss"]
 
-    intervals = {"train":1}#, "val":1}
+    intervals = {"train":1}
     attr_tracker = util.MetricTracker(name="G attribute loss", function=losses.maskedMAE_sum, intervals=intervals)
     cc_tracker = util.MetricTracker(name="cycle consistency", function=losses.L1_dist_mean, intervals=intervals)
     R_tracker = util.MetricTracker(name="regressor loss", function=losses.maskedMSE_sum, intervals=intervals)
@@ -72,8 +71,7 @@ def train_model(args, dataloaders):
         for batch in dataloaders["train"]:
             global_step += 1
             attr_targ = next(dataloaders["train_attr"].__iter__()).cuda()
-            example_outputs = process_minibatch(
-                batch, attr_targ, phase="train")
+            example_outputs = process_minibatch(batch, attr_targ, phase="train")
             if global_step % 200 == 0:
                 break
 
@@ -87,11 +85,9 @@ def train_model(args, dataloaders):
         if attr_tracker.is_at_min("train"):
             torch.save(G.state_dict(), osp.join(paths["weights dir"], "best_G.pth"))
             torch.save(R.state_dict(), osp.join(paths["weights dir"], "best_R.pth"))
-            # util.save_metric_histograms(metric_trackers, epoch=epoch, root=paths["job output dir"]+"/plots")
         util.save_plots(metric_trackers, root=paths["job output dir"]+"/plots")
 
         for tracker in metric_trackers:
-            # tracker.update_at_epoch_end(phase="val")
             tracker.update_at_epoch_end(phase="train")
 
         optim.update_SIT_weights(SIT_w, args["loss"])
@@ -123,5 +119,4 @@ def build_RGAE(args):
         R = Encoder(in_channels=1, out_dim=num_attributes)
 
     
-    modify_model(network_settings["modifications"], (G, R))
     return G.cuda(), R.cuda()

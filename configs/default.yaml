@@ -1,18 +1,13 @@
 random seed: 0
-AMP: false
-debug: false
-paths:
-  datasets dir: /data/vision/polina/scratch/clintonw/datasets
-  slurm output dir: ~/code/sitgan/results
-  pretrained model name: null
+paths: {}
 data loading:
-  batch size: 4
+  batch size: 8
   upper percentile: 97
   lower percentile: 1
   clip: false
 optimizer:
   type: Adam
-  epochs: 30
+  epochs: 50
   G learning rate: 1e-3
   weight decay: 1e-4
 augmentations:
@@ -28,13 +23,6 @@ augmentations:
   bias field:
     coefficients: 0,.5
     order: 3
-  consistency regularization: null
 network:
   outputs: null
-  modifications:
-    blurpool: false
-    squeeze-excite: false
-    channels last: false
-    factorize layers: false
-    freeze layers: false
 loss: {}

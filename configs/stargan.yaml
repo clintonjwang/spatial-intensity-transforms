@@ -5,17 +5,14 @@ network:
     pretrained: False
   generator:
     type: UNet
+    min channels: 16
     optimizer step interval: 1
     res blocks: 1
-    min channels: 16
-data loading:
-  batch size: 8
 loss:
   adversarial loss type: WGAN-GP
-  attribute loss: 100
+  attribute loss: 10
   reconstruction loss: .1
   regressor loss: 10
   gradient penalty: 1
 optimizer:
-  epochs: 30
   D/R learning rate: 1e-3

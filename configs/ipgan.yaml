@@ -5,9 +5,6 @@ network:
   discriminator:
     type: simple
     pretrained: False
-data loading:
-  batch size: 6
-  spread: 1.2
 loss:
   adversarial loss type: WGAN-GP
   ID loss: .1

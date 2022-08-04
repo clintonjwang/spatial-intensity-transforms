@@ -7,11 +7,6 @@ import monai.transforms as mtr
 import util
 
 def get_transforms(args):
-    if "3D" in args["dataset"]:
-        spatial_dims = 3
-    elif "2D" in args["dataset"]:
-        spatial_dims = 2
-
     preproc_settings = args["data loading"]
     aug_settings = args["augmentations"]
 
@@ -25,7 +20,6 @@ def get_transforms(args):
             clip=preproc_settings["clip"]
         ),
         mtr.CropForegroundd(keys=["image"], source_key="image"),
-        # mtr.DivisiblePadd(keys=["image"], k=16),
         mtr.SpatialPadd(keys=["image"], spatial_size=args["data loading"]["image shape"]),
         mtr.ToTensord(keys=["image", "attributes"]),
         mtr.CastToTyped(keys=["image", "attributes"], dtype=torch.float32)
@@ -100,29 +94,20 @@ def get_transforms(args):
                     shear_range=aug_settings["affine"]["shearing"],
                     prob=p,
                 ))
-                # transform_sequence.append(mtr.RandRotate90d(
-                #     keys=["image"],
-                #     prob=.1,
-                #     max_k=3,
-                # ))
             elif s == 'elastic':
                 R = aug_settings["elastic"]["rotation"]
                 if hasattr(R, "__iter__"):
                     R = [r * np.pi/180 for r in R]
                 else:
                     R *= np.pi/180
-                if spatial_dims == 3:
-                    tx = mtr.Rand3DElasticd
-                else:
-                    tx = mtr.Rand2DElasticd
-                transform_sequence.append(tx(keys=["image"],
+                transform_sequence.append(mtr.Rand2DElasticd(keys=["image"],
                     sigma_range=aug_settings["elastic"]["sigma range"],
                     magnitude_range=aug_settings["elastic"]["magnitude range"],
                     rotate_range=R,
                     translate_range=aug_settings["elastic"]["translation"],
                     scale_range=aug_settings["elastic"]["scaling"],
                     shear_range=aug_settings["elastic"]["shearing"],
-                    prob=p))    
+                    prob=p))
             elif s == 'flip':
                 transform_sequence.append(mtr.RandFlipd(
                     keys=["image"], spatial_axis=[1], prob=p,
@@ -163,4 +148,3 @@ def get_attr_transforms():
         mtr.CastToType(dtype=torch.float32),
         mtr.SqueezeDim(0),
     ])
-

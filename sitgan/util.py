@@ -1,8 +1,14 @@
+<<<<<<< HEAD
 import os, re, torch, cv2, sys, pdb, yaml
 osp = os.path
 from glob import glob
 import numpy as np
 import pandas as pd
+=======
+import os, torch, sys, yaml
+osp = os.path
+import numpy as np
+>>>>>>> 05210ec13073bcca9b4dbff798fb626d963082dc
 
 import matplotlib
 matplotlib.use("agg")
@@ -23,6 +29,7 @@ def get_num_channels_for_outputs(outputs):
         out_channels = 1
     return out_channels
 
+<<<<<<< HEAD
 def glob2(*paths):
     pattern = osp.expanduser(osp.join(*paths))
     if "*" not in pattern:
@@ -65,6 +72,8 @@ def flatten_list(collection):
         new_list += list(element)
     return new_list
     
+=======
+>>>>>>> 05210ec13073bcca9b4dbff798fb626d963082dc
 def parse_int_or_list(x):
     # converts string to an int or list of ints
     if not isinstance(x, str):
@@ -184,6 +193,7 @@ def save_plots(trackers, root=None):
         tracker.lineplot(path=path)
 
 
+<<<<<<< HEAD
 def save_metric_histograms(trackers, epoch, root):
     os.makedirs(root, exist_ok=True)
     for tracker in trackers:
@@ -192,6 +202,8 @@ def save_metric_histograms(trackers, epoch, root):
             tracker.histogram(path=path, phase=phase, epoch=epoch)
 
 
+=======
+>>>>>>> 05210ec13073bcca9b4dbff798fb626d963082dc
 def save_examples(epoch, root, *imgs, transforms=None):
     imgs = list(imgs)
     if isinstance(imgs[0], torch.Tensor):
@@ -221,6 +233,7 @@ def save_examples(epoch, root, *imgs, transforms=None):
             raise NotImplementedError("need to handle transforms")
         plt.imsave(f"{root}/{epoch}_{ix}.png", cat, cmap="gray")
     plt.close("all")
+<<<<<<< HEAD
 
 def save_example_3d(iteration, root, img, gt_seg, pred_logit):
     if isinstance(img, torch.Tensor):
@@ -327,3 +340,5 @@ def to_latex_table(table, cols=None, precision=3):
         outputs.append(" & ".join([col_vals[c][ix] for c in cols]) + r" \\")
         print(outputs[-1])
     return outputs
+=======
+>>>>>>> 05210ec13073bcca9b4dbff798fb626d963082dc

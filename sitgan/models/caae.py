@@ -1,16 +1,12 @@
-import os, pdb, gc
+import os
 osp = os.path
-
 import numpy as np
 import torch
 nn = torch.nn
 F = nn.functional
 
-from tqdm import tqdm
-
-import args as args_module
 import util, losses, optim
-from models.common import FC_BN_ReLU, modify_model
+from models.common import FC_BN_ReLU
 from models.ipgan import Generator, Discriminator as img_Discrim
 
 
@@ -41,8 +37,8 @@ def train_model(args, dataloaders):
     D_diff_tracker = util.MetricTracker(name="D diff loss", function=lambda x: x.squeeze(), intervals=intervals)
     recon_tracker = util.MetricTracker(name="reconstruction", function=losses.L1_dist_mean, intervals=intervals)
     TV_tracker = util.MetricTracker(name="smooth output", function=losses.total_variation_norm, intervals=intervals)
-    SIT_w, SIT_trackers = optim.get_SIT_weights_and_trackers(args["loss"], intervals)
     gp_tracker = util.MetricTracker(name="gradient penalty", function=losses.gradient_penalty_y, intervals={"train":1})
+    SIT_w, SIT_trackers = optim.get_SIT_weights_and_trackers(args["loss"], intervals)
     total_G_tracker = util.MetricTracker(name="total G loss", intervals=intervals)
     metric_trackers = [E_adv_tracker, G_adv_tracker, Dz_adv_tracker, Dimg_adv_tracker,
         recon_tracker, TV_tracker, gp_tracker, total_G_tracker, *list(SIT_trackers.values())]
@@ -110,7 +106,6 @@ def train_model(args, dataloaders):
     for epoch in range(1,max_epochs+1):
         for m in models.values():
             m.train()
-        # attr_iter = dataloaders["train_attr"].__iter__()
         for batch in dataloaders["train"]:
             attr_targ = next(dataloaders["train_attr"].__iter__()).cuda()
             example_outputs = process_minibatch(batch, attr_targ, phase="train")
@@ -128,7 +123,6 @@ def train_model(args, dataloaders):
         if total_G_tracker.is_at_min("train"):
             for m,model in models.items():
                 torch.save(model.state_dict(), osp.join(paths["weights dir"], f"best_{m}.pth"))
-            # util.save_metric_histograms(metric_trackers, epoch=epoch, root=paths["job output dir"]+"/plots")
         util.save_plots(metric_trackers, root=paths["job output dir"]+"/plots")
 
         for tracker in metric_trackers:
@@ -150,7 +144,6 @@ def build_CAAE(args):
         type=network_settings["discriminator"]["type"],
         pretrained=network_settings["discriminator"]["pretrained"])
 
-    modify_model(network_settings["modifications"], (G, Dz, Dimg))
     return G.cuda(), Dz.cuda(), Dimg.cuda()
 
 

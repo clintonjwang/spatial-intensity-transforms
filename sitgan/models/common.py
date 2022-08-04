@@ -3,22 +3,9 @@ nn=torch.nn
 F=nn.functional
 
 from monai.networks.blocks import Warp, DVF2DDF
-from composer import functional as cf
-
-def modify_model(modifications, models):
-    for m in models:
-        if modifications["blurpool"]:
-            cf.apply_blurpool(m)
-        if modifications["squeeze-excite"]:
-            cf.apply_squeeze_excite(m)
-        if modifications["channels last"]:
-            cf.apply_channels_last(m)
-        if modifications["factorize layers"]:
-            cf.apply_factorization(m)
-
 
 class OutputTransform(nn.Module):
-    def __init__(self, outputs):
+    def __init__(self, outputs, sigmoid=False):
         super().__init__()
         if outputs is None or outputs=="":
             self.outputs = []
@@ -38,10 +25,8 @@ class OutputTransform(nn.Module):
             transforms = None
         elif len(self.outputs) == 1:
             if self.outputs[0] == "displacement":
-                # transforms = transforms * 10
                 out = self.warp(x, transforms)
             elif self.outputs[0] == "velocity":
-                # transforms = transforms * 10
                 ddf = self.DVF2DDF(transforms)
                 out = self.warp(x, ddf)
             elif self.outputs[0] == "diffs":
@@ -196,7 +181,7 @@ class Up(nn.Module):
         if upsampling_type == "bilinear":
             self.up = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=False)
         else:
-            self.up = nn.ConvTranspose2d(in_size, in_size, kernel_size=2, stride=2)#, padding=1)
+            self.up = nn.ConvTranspose2d(in_size, in_size, kernel_size=2, stride=2)
         self.conv = ConvConv(in_size, out_size)
     def forward(self, x):
         return self.conv(self.up(x))
@@ -209,7 +194,7 @@ class UpCat(nn.Module):
         if upsampling_type == "bilinear":
             self.up = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=False)
         else:
-            self.up = nn.ConvTranspose2d(in_size, in_size, kernel_size=2, stride=2)#, padding=1)
+            self.up = nn.ConvTranspose2d(in_size, in_size, kernel_size=2, stride=2)
         self.conv = ConvConv(in_size + cat_size, out_size)
 
     def forward(self, x1, x2):

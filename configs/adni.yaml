@@ -7,6 +7,7 @@ data loading:
   - CDR
   image shape:
   - 224
+<<<<<<< HEAD
   - 160
 paths:
   # nii dir: /data/vision/polina/scratch/clintonw/datasets/ADNI/affine
@@ -15,3 +16,6 @@ paths:
   data root: /data/vision/polina/scratch/clintonw/datasets/ADNI
   3D T1 npy subdir: t1/npy
   2D T1 npy subdir: 2d_t1
+=======
+  - 160
+>>>>>>> 05210ec13073bcca9b4dbff798fb626d963082dc

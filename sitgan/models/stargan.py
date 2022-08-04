@@ -1,17 +1,13 @@
-import os, pdb, gc
+import os
 osp = os.path
-
 import numpy as np
 import torch
 nn=torch.nn
 F=nn.functional
 
-from tqdm import tqdm
-import kornia.losses
-
 import util, losses, optim
 from monai.networks.nets import SEResNet50, DenseNet121
-from models.common import OutputTransform, modify_model, Encoder
+from models.common import OutputTransform, Encoder
 from models.ipgan import Generator
 
 def train_model(args, dataloaders):
@@ -23,7 +19,6 @@ def train_model(args, dataloaders):
     optims = optim.get_starGAN_optims(models, args["optimizer"])
 
     max_epochs = args["optimizer"]["epochs"]
-    # gradscaler = torch.cuda.amp.GradScaler()
     global_step = 0
 
     cc_w = loss_args["reconstruction loss"]
@@ -32,7 +27,7 @@ def train_model(args, dataloaders):
     R_w = loss_args["regressor loss"]
 
     G_fxn, D_fxn = losses.adv_loss_fxns(loss_args)
-    intervals = {"train":1}#, "val":1}
+    intervals = {"train":1}
     
     G_adv_tracker = util.MetricTracker(name="G adversarial loss", function=G_fxn, intervals=intervals)
     D_adv_tracker = util.MetricTracker(name="D adversarial loss", function=D_fxn, intervals=intervals)
@@ -107,15 +102,12 @@ def train_model(args, dataloaders):
     for epoch in range(1,max_epochs+1):
         G.train()
         DR.train()
-        # attr_iter = dataloaders["train_attr"].__iter__()
         for batch in dataloaders["train"]:
             global_step += 1
             attr_targ = next(dataloaders["train_attr"].__iter__()).cuda()
             if global_step % args["network"]["generator"]["optimizer step interval"] == 0:
                 G_loss, DR_loss, example_outputs = process_minibatch_grad(
                     batch, attr_targ, phase="train")
-                if np.isnan(G_loss.item()) or np.isnan(DR_loss.item()):
-                    raise ValueError(f"loss became NaN")
             else:
                 DR_loss = process_minibatch_DR(batch, attr_targ)
             if global_step % 200 == 0:
@@ -132,17 +124,11 @@ def train_model(args, dataloaders):
         if attr_tracker.is_at_min("train"):
             torch.save(G.state_dict(), osp.join(paths["weights dir"], "best_G.pth"))
             torch.save(DR.state_dict(), osp.join(paths["weights dir"], "best_DR.pth"))
-            # util.save_metric_histograms(metric_trackers, epoch=epoch, root=paths["job output dir"]+"/plots")
         util.save_plots(metric_trackers, root=paths["job output dir"]+"/plots")
 
         for tracker in metric_trackers:
-            # tracker.update_at_epoch_end(phase="val")
             tracker.update_at_epoch_end(phase="train")
 
-        if "attribute loss growth" in loss_args:
-            attr_w += loss_args["attribute loss growth"]
-        if "reconstruction loss growth" in loss_args:
-            cc_w += loss_args["reconstruction loss growth"]
         optim.update_SIT_weights(SIT_w, args["loss"])
 
     torch.save(G.state_dict(), osp.join(paths["weights dir"], "final_G.pth"))
@@ -165,7 +151,6 @@ def build_starGAN(args):
         type=network_settings["discriminator"]["type"],
         pretrained=network_settings["discriminator"]["pretrained"])
     
-    modify_model(network_settings["modifications"], (G, DR))
     return G.cuda(), DR.cuda()
 
 
@@ -174,13 +159,7 @@ class ConditionalUNet(nn.Module):
     def __init__(self, num_attributes, outputs=None, num_res_units=4, min_channels=32,
             upsampling_type="bilinear"):
         super().__init__()
-        if "displacement" in outputs or "velocity" in outputs:
-            if "," in outputs:
-                out_channels = 3
-            else:
-                out_channels = 2
-        else:
-            out_channels = 1
+        out_channels = util.get_num_channels_for_outputs(outputs)
 
         N = num_attributes
         self.C = (min_channels, min_channels*2, min_channels*4, min_channels*8)
@@ -195,9 +174,6 @@ class ConditionalUNet(nn.Module):
         self.up3 = UpCat(self.C[1]+N, self.C[0], cat_size=self.C[1], upsampling_type=upsampling_type)
         self.up4 = Up(self.C[0]+N, self.C[0], upsampling_type=upsampling_type)
         self.to_tx = nn.Conv2d(self.C[0], out_channels, kernel_size=1)
-        # self.to_tx4 = ConvConv(self.C[2], out_channels)
-        # self.to_tx3 = ConvConv(self.C[1], out_channels)
-        # self.to_tx2 = ConvConv(self.C[0], out_channels)
         self.final_transforms = OutputTransform(outputs)
 
     def forward(self, x, y, return_transforms=False):
@@ -208,18 +184,12 @@ class ConditionalUNet(nn.Module):
         x4 = self.down3(x3)
         x5 = self.down4(torch.cat([x4, y_.tile(*x4.shape[2:])], dim=1))
         z = self.low_convs(x5)
-        z4 = self.up1(torch.cat([z, y_.tile(*z.shape[2:])], dim=1), x4)
-        z3 = self.up2(z4, x3)
-        z2 = self.up3(torch.cat([z3, y_.tile(*z3.shape[2:])], dim=1), x2)
-        z1 = self.up4(torch.cat([z2, y_.tile(*z2.shape[2:])], dim=1)) #, x1
-        transforms = self.to_tx(z1)#merge_pyramid(z1, self.to_tx2(z2), self.to_tx3(z3), self.to_tx4(z4))
+        z = self.up1(torch.cat([z, y_.tile(*z.shape[2:])], dim=1), x4)
+        z = self.up2(z, x3)
+        z = self.up3(torch.cat([z, y_.tile(*z.shape[2:])], dim=1), x2)
+        z = self.up4(torch.cat([z, y_.tile(*z.shape[2:])], dim=1))
+        transforms = self.to_tx(z)
         return self.final_transforms(x, transforms, return_transforms=return_transforms)
-
-def merge_pyramid(*inputs):
-    ret = inputs[0]
-    for scale,i in enumerate(inputs[1:]):
-        ret = ret + F.interpolate(i, scale_factor=2**(scale+1))
-    return ret
 
 class DiscrimRegressor(nn.Module):
     def __init__(self, num_attributes, type, pretrained=False):

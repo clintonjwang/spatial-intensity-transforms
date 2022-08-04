@@ -2,5 +2,3 @@ network:
   outputs: displacement
 loss:
   smooth field: 1
-  # sparse field: .01
-  # regularizer decay: .01

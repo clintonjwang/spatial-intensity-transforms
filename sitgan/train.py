@@ -1,13 +1,21 @@
+<<<<<<< HEAD
 import os, pdb, functools, submitit, shutil
 osp = os.path
 
+=======
+import os
+osp = os.path
+>>>>>>> 05210ec13073bcca9b4dbff798fb626d963082dc
 import numpy as np
 
 import args as args_module
 from data.dataloader import get_dataloaders
 from models.stargan import train_model as train_starGAN
 from models.caae import train_model as train_CAAE
+<<<<<<< HEAD
 from models.cvae import train_model as train_CVAE
+=======
+>>>>>>> 05210ec13073bcca9b4dbff798fb626d963082dc
 from models.rgae import train_model as train_RGAE
 from models.ipgan import train_model as train_IPGAN
 
@@ -30,14 +38,18 @@ def main(seed, args):
         train_RGAE(args, dataloaders=dataloaders)
     elif args["network"]["type"] == "CAAE":
         train_CAAE(args, dataloaders=dataloaders)
+<<<<<<< HEAD
     elif args["network"]["type"] == "CVAE":
         train_CVAE(args, dataloaders=dataloaders)
+=======
+>>>>>>> 05210ec13073bcca9b4dbff798fb626d963082dc
     elif args["network"]["type"] == "IPGAN":
         train_IPGAN(args, dataloaders=dataloaders)
 
 
 if __name__ == "__main__":
     args = args_module.parse_args()
+<<<<<<< HEAD
     if "manual" in args["job_id"]:
         args["debug"] = True
         main(args["random seed"], args)
@@ -58,3 +70,6 @@ if __name__ == "__main__":
             jobs = executor.map_array(fxn, args["random seed"])
         else:
             job = executor.submit(main, args["random seed"], args)
+=======
+    main(args["random seed"], args)
+>>>>>>> 05210ec13073bcca9b4dbff798fb626d963082dc
